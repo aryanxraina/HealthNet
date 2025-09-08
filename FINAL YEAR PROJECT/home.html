@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthNet - AI-Powered Preventive Healthcare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .feature-icon {
+            background-color: rgba(79, 70, 229, 0.1);
+            border-radius: 50%;
+            padding: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tab-active {
+            color: #4f46e5;
+            border-bottom: 2px solid #4f46e5;
+        }
+        
+        /* Screen reader only text */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span class="ml-2 text-xl font-bold text-gray-800">HealthNet</span>
+            </div>
+            
+            <nav class="hidden md:flex space-x-8">
+                <a href="home.html" class="text-indigo-600 font-medium">Home</a>
+                <a href="dashboard.html" class="text-gray-700 hover:text-indigo-600 font-medium">Dashboard</a>
+                <a href="questionnaire.html" class="text-gray-700 hover:text-indigo-600 font-medium">Questionnaire</a>
+                <a href="food-tracker.html" class="text-gray-700 hover:text-indigo-600 font-medium">Food Tracker</a>
+            </nav>
+            
+            <!-- Universal Search -->
+            <div class="relative hidden md:block">
+                <div class="relative">
+                    <input type="text" id="universal-search" placeholder="Search HealthNet..." 
+                           class="w-64 lg:w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                           aria-label="Search HealthNet features and content"
+                           aria-describedby="search-description">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400" aria-hidden="true"></i>
+                    </div>
+                    <div id="search-description" class="sr-only">Search for health features, questionnaires, food tracking, and more</div>
+                </div>
+                
+                <!-- Search Results Dropdown -->
+                <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden max-h-96 overflow-y-auto">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div id="userSection" class="hidden">
+                    <div class="flex items-center cursor-pointer" id="profileDropdown">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXItY2lyY2xlIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTAiIHI9IjMiLz48cGF0aCBkPSJNNyAyMXYtMmE0IDQgMCAwIDEgNC00aDJhNCA0IDAgMCAxIDQgNHYyIi8+PC9zdmc+" alt="Profile" class="h-8 w-8 rounded-full bg-gray-200 p-1">
+                        <span class="ml-2 text-sm font-medium text-gray-700" id="userName">Rahul Sharma</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div id="profileMenu" class="absolute right-4 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Health Records</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                        <hr class="my-1">
+                        <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100" id="logoutBtn">Sign out</a>
+                    </div>
+                </div>
+                <button id="loginBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">Login</button>
+                <button class="md:hidden" id="mobileMenuBtn" aria-label="Toggle mobile menu" aria-expanded="false" aria-controls="mobileMenu">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="md:hidden bg-white py-2 px-4 hidden">
+            <a href="home.html" class="block py-2 text-indigo-600 font-medium">Home</a>
+            <a href="dashboard.html" class="block py-2 text-gray-700 hover:text-indigo-600 font-medium">Dashboard</a>
+            <a href="questionnaire.html" class="block py-2 text-gray-700 hover:text-indigo-600 font-medium">Questionnaire</a>
+            <a href="food-tracker.html" class="block py-2 text-gray-700 hover:text-indigo-600 font-medium">Food Tracker</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-16 md:py-24">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-8 md:mb-0">
+                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">AI-Powered Preventive Healthcare for Every Indian</h1>
+                    <p class="text-lg md:text-xl mb-8 text-indigo-100">Leveraging India's Digital Public Infrastructure to predict, prevent, and manage health risks before they become serious.</p>
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <button class="bg-white text-indigo-700 px-6 py-3 rounded-lg font-medium hover:bg-indigo-50 transition">Get Started</button>
+                        <button class="border border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:bg-opacity-10 transition">Learn More</button>
+                    </div>
+                </div>
+                <div class="md:w-1/2 flex justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-full max-w-md" viewBox="0 0 800 600" fill="none">
+                        <rect x="100" y="100" width="600" height="400" rx="20" fill="#ffffff" fill-opacity="0.1"/>
+                        <circle cx="400" cy="300" r="150" fill="#ffffff" fill-opacity="0.1"/>
+                        <path d="M300 300C300 250 350 200 400 200C450 200 500 250 500 300C500 350 450 400 400 400C350 400 300 350 300 300Z" stroke="white" stroke-width="8"/>
+                        <path d="M400 200V150" stroke="white" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M400 450V400" stroke="white" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M500 300H550" stroke="white" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M250 300H300" stroke="white" stroke-width="8" stroke-linecap="round"/>
+                        <circle cx="400" cy="300" r="20" fill="white"/>
+                        <path d="M380 250L420 350" stroke="white" stroke-width="8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integration with DPI Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Seamlessly Integrated with India's Digital Public Infrastructure</h2>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">HealthNet leverages national digital assets to provide a secure, efficient, and personalized healthcare experience.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md transition-all duration-300 card-hover border border-gray-100">
+                    <div class="feature-icon mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">ABHA Integration</h3>
+                    <p class="text-gray-600 mb-4">Connect your Ayushman Bharat Health Account for seamless access to your health records across healthcare providers.</p>
+                    <button class="text-indigo-600 font-medium flex items-center">
+                        Link ABHA ID
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md transition-all duration-300 card-hover border border-gray-100">
+                    <div class="feature-icon mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">DigiLocker Access</h3>
+                    <p class="text-gray-600 mb-4">Securely store and access your medical reports, prescriptions, and health documents through DigiLocker integration.</p>
+                    <button class="text-indigo-600 font-medium flex items-center">
+                        Connect DigiLocker
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md transition-all duration-300 card-hover border border-gray-100">
+                    <div class="feature-icon mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">UPI Payments</h3>
+                    <p class="text-gray-600 mb-4">Hassle-free payment for consultations, health packages, and medications through secure UPI integration.</p>
+                    <button class="text-indigo-600 font-medium flex items-center">
+                        Setup UPI
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">AI-Powered Health Monitoring & Risk Prediction</h2>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">Our platform uses advanced AI algorithms to analyze your health data and provide personalized insights and recommendations.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Health Risk Assessment</h3>
+                    <p class="text-gray-600">AI-powered analysis of your health data to identify potential risks and provide personalized prevention strategies.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Continuous Monitoring</h3>
+                    <p class="text-gray-600">Track vital health parameters over time with smart alerts for any concerning changes or trends.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Personalized Recommendations</h3>
+                    <p class="text-gray-600">Receive customized health advice, diet plans, and lifestyle modifications based on your unique health profile.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Health Reminders</h3>
+                    <p class="text-gray-600">Smart reminders for medications, check-ups, vaccinations, and other preventive health measures.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Care Coordination</h3>
+                    <p class="text-gray-600">Connect with healthcare providers, family members, and caregivers for collaborative health management.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Appointment Scheduling</h3>
+                    <p class="text-gray-600">Easily book appointments with healthcare providers and receive timely reminders.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Preview Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-8 md:mb-0 md:pr-8">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Your Health Dashboard</h2>
+                    <p class="text-lg text-gray-600 mb-6">Get a comprehensive view of your health status, track progress, and access personalized insights all in one place.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="bg-green-100 rounded-full p-2 mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-medium text-gray-800">Real-time Health Metrics</h4>
+                                <p class="text-gray-600">Monitor vital signs, activity levels, and other health parameters in real-time.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-green-100 rounded-full p-2 mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-medium text-gray-800">Trend Analysis</h4>
+                                <p class="text-gray-600">Visualize health trends over time to track progress and identify patterns.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-green-100 rounded-full p-2 mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-medium text-gray-800">Risk Prediction</h4>
+                                <p class="text-gray-600">AI-powered risk assessment for various health conditions based on your data.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="mt-8 bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition">View Demo Dashboard</button>
+                </div>
+                
+                <div class="md:w-1/2">
+                    <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-semibold text-gray-800">Health Overview</h3>
+                            <div class="flex space-x-2">
+                                <button class="text-gray-500 hover:text-indigo-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    </svg>
+                                </button>
+                                <button class="text-gray-500 hover:text-indigo-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Heart Rate</span>
+                                    <span class="text-xs text-gray-400">Today</span>
+                                </div>
+                                <div class="flex items-end mt-2">
+                                    <span class="text-2xl font-bold text-gray-800">72</span>
+                                    <span class="ml-1 text-sm text-gray-600">bpm</span>
+                                </div>
+                                <div class="mt-2 h-10">
+                                    <canvas id="heartRateChart"></canvas>
+                                    <div id="heartRateLoading" class="flex items-center justify-center h-full">
+                                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Blood Glucose</span>
+                                    <span class="text-xs text-gray-400">Today</span>
+                                </div>
+                                <div class="flex items-end mt-2">
+                                    <span class="text-2xl font-bold text-gray-800">98</span>
+                                    <span class="ml-1 text-sm text-gray-600">mg/dL</span>
+                                </div>
+                                <div class="mt-2 h-10">
+                                    <canvas id="glucoseChart"></canvas>
+                                    <div id="glucoseLoading" class="flex items-center justify-center h-full">
+                                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Blood Pressure</span>
+                                    <span class="text-xs text-gray-400">Today</span>
+                                </div>
+                                <div class="flex items-end mt-2">
+                                    <span class="text-2xl font-bold text-gray-800">120/80</span>
+                                    <span class="ml-1 text-sm text-gray-600">mmHg</span>
+                                </div>
+                                <div class="mt-2 h-10">
+                                    <canvas id="bpChart"></canvas>
+                                    <div id="bpLoading" class="flex items-center justify-center h-full">
+                                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-yellow-50 p-4 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Activity</span>
+                                    <span class="text-xs text-gray-400">Today</span>
+                                </div>
+                                <div class="flex items-end mt-2">
+                                    <span class="text-2xl font-bold text-gray-800">7,245</span>
+                                    <span class="ml-1 text-sm text-gray-600">steps</span>
+                                </div>
+                                <div class="mt-2 h-10">
+                                    <canvas id="activityChart"></canvas>
+                                    <div id="activityLoading" class="flex items-center justify-center h-full">
+                                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">Health Risk Assessment</h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs text-gray-500">Diabetes Risk</span>
+                                        <span class="text-xs font-medium text-green-600">Low</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 15%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs text-gray-500">Cardiovascular Risk</span>
+                                        <span class="text-xs font-medium text-yellow-600">Moderate</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs text-gray-500">Hypertension Risk</span>
+                                        <span class="text-xs font-medium text-red-600">High</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Privacy & Security Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Your Data Privacy & Security</h2>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">We prioritize the security and privacy of your health data with industry-leading measures and compliance with Indian data protection regulations.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border-t-4 border-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">End-to-End Encryption</h3>
+                    <p class="text-gray-600">Your health data is encrypted both in transit and at rest, ensuring it remains secure at all times.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border-t-4 border-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">User Consent Control</h3>
+                    <p class="text-gray-600">You have complete control over who can access your health data and for what purpose.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border-t-4 border-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Regulatory Compliance</h3>
+                    <p class="text-gray-600">Fully compliant with Indian data protection laws and healthcare regulations.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border-t-4 border-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Biometric Authentication</h3>
+                    <p class="text-gray-600">Secure access to your health data using fingerprint or facial recognition.</p>
+                </div>
+            </div>
+            
+            <div class="mt-12 bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Our Data Privacy Commitment</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mt-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <p class="ml-3 text-gray-600">Your data is yours. We never sell or share your personal health information with third parties without your explicit consent.</p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mt-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <p class="ml-3 text-gray-600">We use anonymized data for AI model training to improve health predictions, but you can opt out at any time.</p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mt-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <p class="ml-3 text-gray-600">Our security measures are regularly audited by independent third-party experts to ensure the highest standards.</p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mt-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <p class="ml-3 text-gray-600">You can request a complete export or deletion of your data at any time through your account settings.</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <a href="#" class="text-indigo-600 font-medium hover:text-indigo-700 flex items-center">
+                        Read our full Privacy Policy
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">What Our Users Say</h2>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">Hear from people across India who have transformed their health journey with HealthNet.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600">RS</div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-semibold text-gray-800">Rajesh Singh</h4>
+                            <p class="text-sm text-gray-500">Delhi</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex text-yellow-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"HealthNet detected my pre-diabetic condition early, allowing me to make lifestyle changes that reversed the trend. The ABHA integration made sharing my health data with my doctor seamless."</p>
+                </div>
+                
+                <div class="bg-gray-50 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600">SP</div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-semibold text-gray-800">Sunita Patel</h4>
+                            <p class="text-sm text-gray-500">Mumbai</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex text-yellow-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"As someone managing multiple chronic conditions, HealthNet has been a lifesaver. The medication reminders and ability to share my health data with family members gives me peace of mind."</p>
+                </div>
+                
+                <div class="bg-gray-50 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center mb-4">
+                        <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600">VK</div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-semibold text-gray-800">Vijay Kumar</h4>
+                            <p class="text-sm text-gray-500">Bangalore</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex text-yellow-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"The UPI integration makes paying for health services so convenient. I appreciate how HealthNet connects me with healthcare providers who accept my insurance and shows transparent pricing."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 gradient-bg">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold text-white mb-6">Take Control of Your Health Journey Today</h2>
+            <p class="text-xl text-indigo-100 mb-8 max-w-3xl mx-auto">Join thousands of Indians who are using HealthNet to predict, prevent, and manage their health risks.</p>
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <button class="bg-white text-indigo-700 px-8 py-4 rounded-lg font-medium hover:bg-indigo-50 transition">Create Your Account</button>
+                <button class="border border-white text-white px-8 py-4 rounded-lg font-medium hover:bg-white hover:bg-opacity-10 transition">Schedule a Demo</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span class="ml-2 text-xl font-bold">HealthNet</span>
+                    </div>
+                    <p class="text-gray-400 mb-4">AI-powered preventive healthcare platform leveraging India's Digital Public Infrastructure.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Home</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Services</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Testimonials</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Services</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Health Risk Assessment</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Continuous Monitoring</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Personalized Recommendations</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Care Coordination</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Appointment Scheduling</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-2 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span class="text-gray-400">123 Health Avenue, Bangalore, India</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-2 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-gray-400">info@healthnet.in</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-2 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <span class="text-gray-400">+91 1800-HEALTH-NET</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-12 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-400 text-sm mb-4 md:mb-0">&copy; 2023 HealthNet. All rights reserved.</p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white text-sm">Privacy Policy</a>
+                        <a href="#" class="text-gray-400 hover:text-white text-sm">Terms of Service</a>
+                        <a href="#" class="text-gray-400 hover:text-white text-sm">Cookie Policy</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+            <button id="closeLoginModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            
+            <div class="text-center mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-600 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <h3 class="text-2xl font-bold text-gray-800 mt-2">Welcome to HealthNet</h3>
+                <p class="text-gray-600">Sign in to access your health dashboard</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email or ABHA ID</label>
+                    <input type="email" id="email" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" 
+                           placeholder="Enter your email or ABHA ID"
+                           required
+                           aria-describedby="email-error">
+                    <div id="email-error" class="text-red-600 text-xs mt-1 hidden"></div>
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" 
+                           placeholder="Enter your password"
+                           required
+                           minlength="6"
+                           aria-describedby="password-error">
+                    <div id="password-error" class="text-red-600 text-xs mt-1 hidden"></div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label for="remember" class="ml-2 block text-sm text-gray-700">Remember me</label>
+                    </div>
+                    <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Forgot password?</a>
+                </div>
+                
+                <button id="signInBtn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">Sign In</button>
+                
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-3">
+                    <button class="flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="#4285F4">
+                            <path d="M10 0C4.477 0 0 4.477 0 10c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0110 4.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C17.14 18.163 20 14.418 20 10c0-5.523-4.477-10-10-10z"/>
+                        </svg>
+                    </button>
+                    <button class="flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="#4267B2">
+                            <path d="M20 10.061c0-5.523-4.477-10-10-10s-10 4.477-10 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54v-2.891h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.443 2.891h-2.33v6.988C16.343 19.189 20 15.052 20 10.061z"/>
+                        </svg>
+                    </button>
+                    <button class="flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="#000000">
+                            <path d="M17.84 9.5c0-.655-.07-1.29-.201-1.9h-7.347v3.593h4.197a3.59 3.59 0 01-1.556 2.354v1.96h2.516c1.47-1.355 2.319-3.35 2.319-6.007z" fill="#4285F4"/>
+                            <path d="M10.293 18c2.1 0 3.86-.7 5.145-1.893l-2.516-1.96c-.695.467-1.583.742-2.63.742-2.02 0-3.729-1.367-4.339-3.2H3.363v2.025A7.715 7.715 0 0010.293 18z" fill="#34A853"/>
+                            <path d="M5.954 11.65a4.635 4.635 0 01-.242-1.46c0-.507.088-.998.242-1.46V6.705H3.363a7.72 7.72 0 000 6.97l2.59-2.025z" fill="#FBBC05"/>
+                            <path d="M10.293 6.99c1.14 0 2.16.39 2.968 1.155l2.23-2.23C14.11 4.68 12.35 4 10.293 4a7.715 7.715 0 00-6.93 4.285l2.59 2.025c.61-1.833 2.32-3.2 4.34-3.2z" fill="#EA4335"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p class="text-sm text-gray-600">Don't have an account? <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">Sign up</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Button -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="chatbot-toggle" 
+                class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 transform hover:scale-110"
+                aria-label="Open AI Health Assistant"
+                aria-expanded="false"
+                aria-controls="chatbot-interface">
+            <i class="fas fa-comments text-xl" aria-hidden="true"></i>
+        </button>
+    </div>
+    
+    <!-- Chatbot Interface -->
+    <div id="chatbot-interface" class="fixed bottom-24 right-6 w-80 md:w-96 h-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 hidden" role="dialog" aria-labelledby="chatbot-title" aria-describedby="chatbot-description">
+        <div class="bg-indigo-600 text-white p-4 rounded-t-lg">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-robot mr-2" aria-hidden="true"></i>
+                    <span class="font-semibold" id="chatbot-title">Health Assistant</span>
+                </div>
+                <button id="chatbot-close" class="text-white hover:text-gray-200" aria-label="Close chat">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="chatbot-messages" class="h-64 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" id="chatbot-description">
+            <div class="flex items-start">
+                <div class="bg-indigo-100 text-indigo-800 rounded-lg p-3 max-w-xs">
+                    <p class="text-sm">Welcome to HealthNet! I'm your AI health assistant. I can help you navigate the app, understand your health data, and provide personalized recommendations. How can I assist you today?</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-gray-200">
+            <div class="flex space-x-2">
+                <input type="text" id="chatbot-input" placeholder="Ask me anything..." 
+                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                       aria-label="Type your message to the health assistant">
+                <button id="chatbot-send" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors" aria-label="Send message">
+                    <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            const isExpanded = mobileMenu.classList.contains('hidden');
+            mobileMenu.classList.toggle('hidden');
+            mobileMenuBtn.setAttribute('aria-expanded', !isExpanded);
+        });
+        
+        // Keyboard navigation for mobile menu
+        mobileMenuBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                mobileMenuBtn.click();
+            }
+        });
+        
+        // Login modal
+        const loginBtn = document.getElementById('loginBtn');
+        const loginModal = document.getElementById('loginModal');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+        
+        loginBtn.addEventListener('click', () => {
+            loginModal.classList.remove('hidden');
+        });
+        
+        closeLoginModal.addEventListener('click', () => {
+            loginModal.classList.add('hidden');
+        });
+        
+        // Close modal when clicking outside
+        loginModal.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                loginModal.classList.add('hidden');
+            }
+        });
+        
+        // Form validation
+        function validateForm() {
+            const email = document.getElementById('email');
+            const password = document.getElementById('password');
+            const emailError = document.getElementById('email-error');
+            const passwordError = document.getElementById('password-error');
+            
+            let isValid = true;
+            
+            // Reset error messages
+            emailError.classList.add('hidden');
+            passwordError.classList.add('hidden');
+            email.classList.remove('border-red-500');
+            password.classList.remove('border-red-500');
+            
+            // Validate email
+            if (!email.value.trim()) {
+                emailError.textContent = 'Email is required';
+                emailError.classList.remove('hidden');
+                email.classList.add('border-red-500');
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+                emailError.textContent = 'Please enter a valid email address';
+                emailError.classList.remove('hidden');
+                email.classList.add('border-red-500');
+                isValid = false;
+            }
+            
+            // Validate password
+            if (!password.value.trim()) {
+                passwordError.textContent = 'Password is required';
+                passwordError.classList.remove('hidden');
+                password.classList.add('border-red-500');
+                isValid = false;
+            } else if (password.value.length < 6) {
+                passwordError.textContent = 'Password must be at least 6 characters';
+                passwordError.classList.remove('hidden');
+                password.classList.add('border-red-500');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // Sign in functionality
+        const signInBtn = document.getElementById('signInBtn');
+        const userSection = document.getElementById('userSection');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const profileMenu = document.getElementById('profileMenu');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        signInBtn.addEventListener('click', () => {
+            if (validateForm()) {
+                loginModal.classList.add('hidden');
+                loginBtn.classList.add('hidden');
+                userSection.classList.remove('hidden');
+            }
+        });
+        
+        profileDropdown.addEventListener('click', () => {
+            profileMenu.classList.toggle('hidden');
+        });
+        
+        logoutBtn.addEventListener('click', () => {
+            userSection.classList.add('hidden');
+            loginBtn.classList.remove('hidden');
+            profileMenu.classList.add('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.classList.add('hidden');
+            }
+        });
+        
+        // Initialize charts with error handling and lazy loading
+        function initializeCharts() {
+            // Check if charts are in viewport
+            const chartSection = document.querySelector('.md\\:w-1\\/2');
+            if (!chartSection) return;
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        createCharts();
+                        observer.disconnect();
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            observer.observe(chartSection);
+        }
+        
+        function createCharts() {
+            try {
+                // Check if Chart.js is loaded
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js not loaded');
+                    return;
+                }
+                
+                // Heart Rate Chart
+                const heartRateCanvas = document.getElementById('heartRateChart');
+                if (!heartRateCanvas) {
+                    console.error('Heart rate chart canvas not found');
+                    return;
+                }
+                
+                const heartRateCtx = heartRateCanvas.getContext('2d');
+                
+                // Hide loading state
+                const heartRateLoading = document.getElementById('heartRateLoading');
+                if (heartRateLoading) {
+                    heartRateLoading.style.display = 'none';
+                }
+                
+                new Chart(heartRateCtx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', '', ''],
+                    datasets: [{
+                        data: [68, 72, 70, 73, 69, 72],
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Glucose Chart
+            const glucoseCanvas = document.getElementById('glucoseChart');
+            if (!glucoseCanvas) {
+                console.error('Glucose chart canvas not found');
+                return;
+            }
+            const glucoseCtx = glucoseCanvas.getContext('2d');
+            
+            // Hide loading state
+            const glucoseLoading = document.getElementById('glucoseLoading');
+            if (glucoseLoading) {
+                glucoseLoading.style.display = 'none';
+            }
+            
+            new Chart(glucoseCtx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', '', ''],
+                    datasets: [{
+                        data: [95, 102, 98, 105, 97, 98],
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Blood Pressure Chart
+            const bpCanvas = document.getElementById('bpChart');
+            if (!bpCanvas) {
+                console.error('Blood pressure chart canvas not found');
+                return;
+            }
+            const bpCtx = bpCanvas.getContext('2d');
+            
+            // Hide loading state
+            const bpLoading = document.getElementById('bpLoading');
+            if (bpLoading) {
+                bpLoading.style.display = 'none';
+            }
+            
+            new Chart(bpCtx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', '', ''],
+                    datasets: [{
+                        data: [120, 118, 122, 119, 121, 120],
+                        borderColor: '#8b5cf6',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Activity Chart
+            const activityCanvas = document.getElementById('activityChart');
+            if (!activityCanvas) {
+                console.error('Activity chart canvas not found');
+                return;
+            }
+            const activityCtx = activityCanvas.getContext('2d');
+            
+            // Hide loading state
+            const activityLoading = document.getElementById('activityLoading');
+            if (activityLoading) {
+                activityLoading.style.display = 'none';
+            }
+            
+            new Chart(activityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['', '', '', '', '', ''],
+                    datasets: [{
+                        data: [5200, 6800, 4500, 7200, 6500, 7245],
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 4,
+                        barThickness: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+        }
+        }
+        
+        // Initialize charts when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+        
+        // Chatbot functionality
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbotInterface = document.getElementById('chatbot-interface');
+        const chatbotClose = document.getElementById('chatbot-close');
+        const chatbotInput = document.getElementById('chatbot-input');
+        const chatbotSend = document.getElementById('chatbot-send');
+        const chatbotMessages = document.getElementById('chatbot-messages');
+        
+        // User context tracking
+        let userContext = {
+            currentPage: 'home',
+            userLoggedIn: false,
+            lastAction: 'page-load'
+        };
+        
+        // Toggle chatbot
+        chatbotToggle.addEventListener('click', () => {
+            chatbotInterface.classList.toggle('hidden');
+            const isVisible = !chatbotInterface.classList.contains('hidden');
+            chatbotToggle.setAttribute('aria-expanded', isVisible);
+            if (isVisible) {
+                chatbotInput.focus();
+            }
+        });
+        
+        // Keyboard navigation for chatbot
+        chatbotToggle.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                chatbotToggle.click();
+            }
+        });
+        
+        // Close chatbot
+        chatbotClose.addEventListener('click', () => {
+            chatbotInterface.classList.add('hidden');
+        });
+        
+        // Send message
+        function sendMessage() {
+            const message = chatbotInput.value.trim();
+            if (!message) return;
+            
+            // Disable input while processing
+            chatbotInput.disabled = true;
+            chatbotSend.disabled = true;
+            
+            // Add user message
+            addMessage(message, 'user');
+            chatbotInput.value = '';
+            
+            // Show typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'flex items-start typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="bg-indigo-100 text-indigo-800 rounded-lg p-3 max-w-xs">
+                    <div class="flex space-x-1">
+                        <div class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"></div>
+                        <div class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                        <div class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    </div>
+                </div>
+            `;
+            chatbotMessages.appendChild(typingDiv);
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            
+            // Generate contextual response
+            const response = generateContextualResponse(message);
+            setTimeout(() => {
+                // Remove typing indicator
+                const typingIndicator = chatbotMessages.querySelector('.typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+                
+                addMessage(response, 'bot');
+                
+                // Re-enable input
+                chatbotInput.disabled = false;
+                chatbotSend.disabled = false;
+                chatbotInput.focus();
+            }, 1000);
+        }
+        
+        chatbotSend.addEventListener('click', sendMessage);
+        chatbotInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Sanitize user input to prevent XSS
+        function sanitizeInput(input) {
+            const div = document.createElement('div');
+            div.textContent = input;
+            return div.innerHTML;
+        }
+        
+        // Add message to chat
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start';
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="ml-auto bg-indigo-600 text-white rounded-lg p-3 max-w-xs">
+                        <p class="text-sm">${sanitizeInput(message)}</p>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="bg-indigo-100 text-indigo-800 rounded-lg p-3 max-w-xs">
+                        <p class="text-sm">${sanitizeInput(message)}</p>
+                    </div>
+                `;
+            }
+            
+            chatbotMessages.appendChild(messageDiv);
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        }
+        
+        // Generate contextual responses for home page
+        function generateContextualResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('dashboard') || lowerMessage.includes('health data')) {
+                return "The Dashboard shows your health metrics, risk assessments, and AI-powered insights. You can view your heart rate, glucose levels, blood pressure, and activity data. Would you like me to explain any specific metric?";
+            }
+            
+            if (lowerMessage.includes('questionnaire') || lowerMessage.includes('assessment')) {
+                return "The Health Questionnaire helps create your personalized health profile. It covers personal info, lifestyle, medical history, vitals, mental health, and more. This data helps our AI provide better recommendations.";
+            }
+            
+            if (lowerMessage.includes('food tracker') || lowerMessage.includes('nutrition')) {
+                return "The Food Tracker helps you monitor your daily nutrition intake. You can log meals, track calories, set goals, and see your macro breakdown. It's great for maintaining a healthy diet!";
+            }
+            
+            if (lowerMessage.includes('login') || lowerMessage.includes('sign in')) {
+                return "You can log in using the button in the top right corner. Once logged in, you'll have access to personalized health insights and can save your data across sessions.";
+            }
+            
+            if (lowerMessage.includes('help') || lowerMessage.includes('how to')) {
+                return "I can help you navigate the app! Here's what each section offers: Dashboard (health metrics), Questionnaire (health assessment), Food Tracker (nutrition logging). What would you like to explore first?";
+            }
+            
+            if (lowerMessage.includes('ai') || lowerMessage.includes('artificial intelligence')) {
+                return "Our AI analyzes your health data to provide personalized insights, risk assessments, and recommendations. It learns from your patterns to give you better health advice over time.";
+            }
+            
+            if (lowerMessage.includes('feature') || lowerMessage.includes('what can')) {
+                return "HealthNet offers: AI health risk assessment, personalized recommendations, nutrition tracking, health questionnaires, and integration with India's digital infrastructure (ABHA, DigiLocker, UPI).";
+            }
+            
+            // Default response
+            return "Welcome to HealthNet! I'm here to help you navigate our AI-powered health platform. You can explore the Dashboard, complete the Health Questionnaire, or start tracking your nutrition. What would you like to know more about?";
+        }
+        
+        // Universal Search Functionality
+        const universalSearch = document.getElementById('universal-search');
+        const searchResults = document.getElementById('search-results');
+        
+        // Search database - all features across HealthNet
+        const searchDatabase = [
+            {
+                title: "Dashboard",
+                description: "View health metrics, risk assessments, and AI insights",
+                category: "Navigation",
+                url: "dashboard.html",
+                keywords: ["dashboard", "health metrics", "risk assessment", "ai insights", "vitals", "heart rate", "blood pressure", "glucose", "activity", "steps", "calories", "upload report", "medical report"]
+            },
+            {
+                title: "Health Questionnaire",
+                description: "Complete comprehensive health assessment",
+                category: "Assessment",
+                url: "questionnaire.html",
+                keywords: ["questionnaire", "health assessment", "personal info", "lifestyle", "medical history", "vitals", "mental health", "diet", "nutrition", "social support", "menstrual health", "device tracking"]
+            },
+            {
+                title: "Food Tracker",
+                description: "Track nutrition, calories, and meal planning",
+                category: "Nutrition",
+                url: "food-tracker.html",
+                keywords: ["food tracker", "nutrition", "calories", "meal planning", "add food", "track meals", "macro tracking", "protein", "carbs", "fat", "exercise", "calorie goals", "weight management"]
+            },
+            {
+                title: "Add Food",
+                description: "Log meals and track nutrition intake",
+                category: "Food Tracker",
+                url: "food-tracker.html#add-food",
+                keywords: ["add food", "log meal", "track nutrition", "calorie counting", "meal logging", "food database", "quick add", "search food"]
+            },
+            {
+                title: "Set Nutrition Goals",
+                description: "Configure daily calorie and macro targets",
+                category: "Food Tracker",
+                url: "food-tracker.html#goals",
+                keywords: ["nutrition goals", "calorie goals", "macro goals", "protein goals", "carb goals", "fat goals", "weight goals", "fitness goals"]
+            },
+            {
+                title: "Add Exercise",
+                description: "Log workouts and track calories burned",
+                category: "Food Tracker",
+                url: "food-tracker.html#exercise",
+                keywords: ["add exercise", "workout", "calories burned", "fitness tracking", "exercise log", "activity tracking", "gym", "running", "walking"]
+            },
+            {
+                title: "Upload Medical Report",
+                description: "Upload and analyze medical reports with AI",
+                category: "Dashboard",
+                url: "dashboard.html#upload",
+                keywords: ["upload report", "medical report", "blood test", "lab results", "ai analysis", "health data", "medical documents", "pdf upload"]
+            },
+            {
+                title: "Personal Information",
+                description: "Update personal details and contact information",
+                category: "Questionnaire",
+                url: "questionnaire.html#personal",
+                keywords: ["personal info", "contact details", "name", "age", "gender", "address", "phone", "email", "basic information"]
+            },
+            {
+                title: "Lifestyle Assessment",
+                description: "Complete lifestyle and daily routine questionnaire",
+                category: "Questionnaire",
+                url: "questionnaire.html#lifestyle",
+                keywords: ["lifestyle", "daily routine", "exercise routine", "sleep patterns", "stress levels", "work habits", "activity level", "daily habits"]
+            },
+            {
+                title: "Medical History",
+                description: "Document medical history and family health",
+                category: "Questionnaire",
+                url: "questionnaire.html#medical",
+                keywords: ["medical history", "family history", "past illnesses", "surgeries", "medications", "conditions", "allergies", "health history"]
+            },
+            {
+                title: "Vital Signs",
+                description: "Record current health measurements",
+                category: "Questionnaire",
+                url: "questionnaire.html#vitals",
+                keywords: ["vital signs", "blood pressure", "heart rate", "weight", "height", "bmi", "measurements", "current health", "health metrics"]
+            },
+            {
+                title: "Mental Health Assessment",
+                description: "Evaluate emotional well-being and mental health",
+                category: "Questionnaire",
+                url: "questionnaire.html#mental",
+                keywords: ["mental health", "emotional well-being", "stress", "anxiety", "depression", "mood", "mental state", "psychological health"]
+            },
+            {
+                title: "Diet & Nutrition Assessment",
+                description: "Assess eating habits and dietary preferences",
+                category: "Questionnaire",
+                url: "questionnaire.html#diet",
+                keywords: ["diet", "nutrition", "eating habits", "food preferences", "dietary restrictions", "meal patterns", "nutritional assessment"]
+            },
+            {
+                title: "Social & Support Assessment",
+                description: "Evaluate social connections and support systems",
+                category: "Questionnaire",
+                url: "questionnaire.html#social",
+                keywords: ["social support", "social connections", "family support", "friends", "living environment", "social factors", "support system"]
+            },
+            {
+                title: "Health Score",
+                description: "View overall health score and risk assessment",
+                category: "Dashboard",
+                url: "dashboard.html#health-score",
+                keywords: ["health score", "overall health", "risk assessment", "health rating", "wellness score", "health status"]
+            },
+            {
+                title: "Weekly Reports",
+                description: "View weekly health trends and insights",
+                category: "Dashboard",
+                url: "dashboard.html#reports",
+                keywords: ["weekly reports", "health trends", "insights", "progress reports", "health analytics", "trends"]
+            },
+            {
+                title: "AI Health Assistant",
+                description: "Get help from AI assistant",
+                category: "Support",
+                url: "#chatbot",
+                keywords: ["ai assistant", "help", "support", "chatbot", "health assistant", "guidance", "questions", "assistance"]
+            }
+        ];
+        
+        // Search functionality with debouncing
+        let searchTimeout;
+        universalSearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+            
+            // Debounce search to improve performance
+            searchTimeout = setTimeout(() => {
+                try {
+                    // Search through database
+                    const results = searchDatabase.filter(item => {
+                        return item.title.toLowerCase().includes(query) ||
+                               item.description.toLowerCase().includes(query) ||
+                               item.keywords.some(keyword => keyword.toLowerCase().includes(query));
+                    });
+                    
+                    displaySearchResults(results);
+                } catch (error) {
+                    console.error('Search error:', error);
+                    searchResults.innerHTML = `
+                        <div class="p-4 text-center text-red-500">
+                            <i class="fas fa-exclamation-triangle mb-2"></i>
+                            <p>Search temporarily unavailable</p>
+                        </div>
+                    `;
+                    searchResults.classList.remove('hidden');
+                }
+            }, 300);
+        });
+        
+        // Display search results
+        function displaySearchResults(results) {
+            if (results.length === 0) {
+                searchResults.innerHTML = `
+                    <div class="p-4 text-center text-gray-500">
+                        <i class="fas fa-search mb-2"></i>
+                        <p>No results found</p>
+                        <p class="text-xs mt-1">Try searching for: dashboard, questionnaire, food tracker, or health</p>
+                    </div>
+                `;
+            } else {
+                searchResults.innerHTML = results.map(item => `
+                    <div class="search-result-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" data-url="${item.url}">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-${getIconForCategory(item.category)} text-indigo-600 text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-sm font-medium text-gray-900 truncate">${item.title}</h4>
+                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${item.category}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">${item.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            searchResults.classList.remove('hidden');
+            
+            // Add click handlers to results
+            document.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    if (url.startsWith('#')) {
+                        // Handle in-page navigation (like chatbot)
+                        if (url === '#chatbot') {
+                            document.getElementById('chatbot-toggle').click();
+                        }
+                    } else {
+                        window.location.href = url;
+                    }
+                    searchResults.classList.add('hidden');
+                    universalSearch.value = '';
+                });
+            });
+        }
+        
+        // Get icon for category
+        function getIconForCategory(category) {
+            const icons = {
+                'Navigation': 'compass',
+                'Assessment': 'clipboard-list',
+                'Nutrition': 'apple-alt',
+                'Food Tracker': 'utensils',
+                'Dashboard': 'chart-line',
+                'Questionnaire': 'question-circle',
+                'Support': 'robot'
+            };
+            return icons[category] || 'search';
+        }
+        
+        // Close search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#universal-search') && !e.target.closest('#search-results')) {
+                searchResults.classList.add('hidden');
+            }
+        });
+        
+        // Keyboard navigation
+        universalSearch.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                searchResults.classList.add('hidden');
+                this.blur();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'961caf1865e03cee',t:'MTc1Mjk1Mzk1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Questionnaire</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .tile {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background-color: white;
+        }
+        
+        .tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tile.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #10b981;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            transition: width 0.5s ease;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: #f9fafb;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .form-control:focus {
+            border-color: #3b82f6;
+            outline: 0;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        
+        .btn {
+            display: inline-block;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.375rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            color: #fff;
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+        
+        .btn-secondary {
+            color: #6b7280;
+            background-color: #f3f4f6;
+            border-color: #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+        }
+        
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .radio-option, .checkbox-option {
+            display: flex;
+            align-items: center;
+        }
+        
+        .radio-option input, .checkbox-option input {
+            margin-right: 0.5rem;
+        }
+        
+        .section-1 { background-color: #f0f9ff; border-left: 4px solid #3b82f6; }
+        .section-2 { background-color: #f0fdf4; border-left: 4px solid #10b981; }
+        .section-3 { background-color: #fef2f2; border-left: 4px solid #ef4444; }
+        .section-4 { background-color: #fff7ed; border-left: 4px solid #f97316; }
+        .section-5 { background-color: #faf5ff; border-left: 4px solid #8b5cf6; }
+        .section-6 { background-color: #f8fafc; border-left: 4px solid #64748b; }
+        .section-7 { background-color: #fff1f2; border-left: 4px solid #ec4899; }
+        .section-8 { background-color: #ecfdf5; border-left: 4px solid #059669; }
+        
+        @media (max-width: 768px) {
+            .checkbox-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-900">HealthTracker</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="home.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="dashboard.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-chart-line mr-2"></i>Dashboard
+                        </a>
+                        <a href="questionnaire.html" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-clipboard-list mr-2"></i>Questionnaire
+                        </a>
+                        <a href="food tracker.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-utensils mr-2"></i>Food Tracker
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Universal Search -->
+                <div class="relative hidden md:block ml-4">
+                    <div class="relative">
+                        <input type="text" id="universal-search" placeholder="Search HealthNet..." class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Results Dropdown -->
+                    <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden max-h-96 overflow-y-auto">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button type="button" class="mobile-menu-button bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile menu -->
+            <div class="mobile-menu hidden md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="home.html" class="text-gray-500 hover:text-gray-700 block px-3 py-2 rounded-md text-base font-medium">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    <a href="dashboard.html" class="text-gray-500 hover:text-gray-700 block px-3 py-2 rounded-md text-base font-medium">
+                        <i class="fas fa-chart-line mr-2"></i>Dashboard
+                    </a>
+                    <a href="questionnaire.html" class="bg-blue-100 text-blue-700 block px-3 py-2 rounded-md text-base font-medium">
+                        <i class="fas fa-clipboard-list mr-2"></i>Questionnaire
+                    </a>
+                    <a href="food tracker.html" class="text-gray-500 hover:text-gray-700 block px-3 py-2 rounded-md text-base font-medium">
+                        <i class="fas fa-utensils mr-2"></i>Food Tracker
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Health Questionnaire</h1>
+            <p class="mt-2 text-lg text-gray-600">Complete all sections to create your personalized health profile</p>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                <span>Progress</span>
+                <span id="progress-text">0% Complete</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <!-- Tiles Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Personal Information Tile -->
+            <div class="tile section-1 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between" data-section="personal">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">1. Personal Information</h2>
+                    <p class="mt-2 text-gray-600" id="personal-summary">Add your basic information</p>
+                </div>
+                <div class="mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Lifestyle & Habits Tile -->
+            <div class="tile section-2 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between" data-section="lifestyle">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">2. Lifestyle & Habits</h2>
+                    <p class="mt-2 text-gray-600" id="lifestyle-summary">Add your lifestyle habits</p>
+                </div>
+                <div class="mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Medical History Tile -->
+            <div class="tile section-3 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between" data-section="medical">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">3. Medical History</h2>
+                    <p class="mt-2 text-gray-600" id="medical-summary">Add your medical history</p>
+                </div>
+                <div class="mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Vitals Tracking Tile -->
+            <div class="tile section-4 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between" data-section="vitals">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">4. Vitals Tracking</h2>
+                    <p class="mt-2 text-gray-600" id="vitals-summary">Add your vital measurements</p>
+                </div>
+                <div class="mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Mental & Emotional Health Tile -->
+            <div class="tile section-5 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between" data-section="mental">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">5. Mental Health</h2>
+                    <p class="mt-2 text-gray-600" id="mental-summary">Add your mental health info</p>
+                </div>
+                <div class="mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Preventive Checkups Tile -->
+            <div class="tile section-6 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between" data-section="checkups">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">6. Preventive Checkups</h2>
+                    <p class="mt-2 text-gray-600" id="checkups-summary">Add checkup information</p>
+                </div>
+                <div class="mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Menstrual Health Tile (Hidden by default) -->
+            <div id="menstrual-tile" class="tile section-7 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between hidden" data-section="menstrual">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">7. Menstrual Health</h2>
+                    <p class="mt-2 text-gray-600" id="menstrual-summary">Add menstrual health info</p>
+                </div>
+                <div class="mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Wellness Device Tracking Tile -->
+            <div class="tile section-8 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between" data-section="device">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">8. Wellness Device Tracking</h2>
+                    <p class="mt-2 text-gray-600" id="device-summary">Add device tracking info</p>
+                </div>
+                <div class="mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Personal Information Modal -->
+        <div id="personal-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Personal Information</h2>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="personal-form">
+                    <div class="form-group">
+                        <label class="form-label" for="name">What is your full name?</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">What is your gender?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="gender" value="male" required> Male
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="gender" value="female"> Female
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="gender" value="other"> Other
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="dob">What is your date of birth?</label>
+                        <input type="date" id="dob" name="dob" class="form-control" required>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label" for="height">What is your height? (cm)</label>
+                            <input type="number" id="height" name="height" class="form-control" min="150" max="200" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="weight">What is your weight? (kg)</label>
+                            <input type="number" id="weight" name="weight" class="form-control" min="40" max="150" step="0.1" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="blood-group">What is your blood group?</label>
+                        <select id="blood-group" name="blood-group" class="form-control" required>
+                            <option value="">Select blood group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="marital-status">What is your marital status?</label>
+                        <select id="marital-status" name="marital-status" class="form-control" required>
+                            <option value="">Select marital status</option>
+                            <option value="single">Single</option>
+                            <option value="married">Married</option>
+                            <option value="divorced">Divorced</option>
+                            <option value="widowed">Widowed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="occupation">What is your occupation?</label>
+                        <select id="occupation" name="occupation" class="form-control" required>
+                            <option value="">Select occupation</option>
+                            <option value="student">Student</option>
+                            <option value="worker">Worker</option>
+                            <option value="retired">Retired</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Lifestyle & Habits Modal -->
+        <div id="lifestyle-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Lifestyle & Habits</h2>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="lifestyle-form">
+                    <div class="form-group">
+                        <label class="form-label">Do you smoke?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="smoking" value="never" required> Never
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="smoking" value="occasionally"> Occasionally
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="smoking" value="regularly"> Regularly
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Do you consume alcohol?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="alcohol" value="never" required> Never
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="alcohol" value="occasionally"> Occasionally
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="alcohol" value="regularly"> Regularly
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">How many liters of water do you drink daily?</label>
+                        <select name="water" class="form-control" required>
+                            <option value="">Select an option</option>
+                            <option value="less_than_1">Less than 1L</option>
+                            <option value="1_to_2">1-2L</option>
+                            <option value="2_to_3">2-3L</option>
+                            <option value="more_than_3">More than 3L</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">How many hours do you sleep on average?</label>
+                        <select name="sleep" class="form-control" required>
+                            <option value="">Select an option</option>
+                            <option value="less_than_5">Less than 5 hours</option>
+                            <option value="5_to_6">5-6 hours</option>
+                            <option value="6_to_7">6-7 hours</option>
+                            <option value="7_to_8">7-8 hours</option>
+                            <option value="more_than_8">More than 8 hours</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">How often do you exercise?</label>
+                        <select name="exercise_frequency" class="form-control" required>
+                            <option value="">Select an option</option>
+                            <option value="never">Never</option>
+                            <option value="rarely">Rarely</option>
+                            <option value="once_a_week">Once a week</option>
+                            <option value="2_3_times_week">2-3 times a week</option>
+                            <option value="4_5_times_week">4-5 times a week</option>
+                            <option value="daily">Daily</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">What types of activities do you do?</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="activities" value="walking"> Walking
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="activities" value="running"> Running
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="activities" value="gym"> Gym
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="activities" value="yoga"> Yoga
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="activities" value="swimming"> Swimming
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="activities" value="cycling"> Cycling
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="activities" value="sports"> Sports
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="activities" value="other"> Other
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">What is your food preference?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="food_preference" value="vegetarian" required> Vegetarian
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="food_preference" value="non_vegetarian"> Non-Vegetarian
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="food_preference" value="vegan"> Vegan
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">How many meals do you eat per day?</label>
+                        <select name="meals_per_day" class="form-control" required>
+                            <option value="">Select an option</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4_plus">4+</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">How much caffeine do you consume per day?</label>
+                        <select name="caffeine" class="form-control" required>
+                            <option value="">Select an option</option>
+                            <option value="none">None</option>
+                            <option value="1_cup">1 cup</option>
+                            <option value="2_cups">2 cups</option>
+                            <option value="3_cups">3 cups</option>
+                            <option value="4_plus_cups">4+ cups</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Medical History Modal -->
+        <div id="medical-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Medical History</h2>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="medical-form">
+                    <div class="form-group">
+                        <label class="form-label">Do you have any existing health conditions?</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="conditions" value="diabetes"> Diabetes
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="conditions" value="hypertension"> Hypertension (High BP)
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="conditions" value="heart_disease"> Heart Disease
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="conditions" value="asthma"> Asthma
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="conditions" value="thyroid"> Thyroid Disorder
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="conditions" value="arthritis"> Arthritis
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="conditions" value="cancer"> Cancer
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="conditions" value="other"> Other
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="other-conditions-group" style="display: none;">
+                        <label class="form-label" for="other-conditions">Please specify other conditions</label>
+                        <textarea id="other-conditions" name="other-conditions" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Does anyone in your family have chronic disease?</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="family_history" value="diabetes"> Diabetes
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="family_history" value="hypertension"> Hypertension (High BP)
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="family_history" value="heart_disease"> Heart Disease
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="family_history" value="cancer"> Cancer
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="family_history" value="stroke"> Stroke
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="family_history" value="other"> Other
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Are you on any regular medications?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="medications" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="medications" value="no"> No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="medications-details-group" style="display: none;">
+                        <label class="form-label" for="medications-details">Please list your medications</label>
+                        <textarea id="medications-details" name="medications-details" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Have you had any surgeries or hospitalizations?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="surgeries" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="surgeries" value="no"> No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="surgeries-details-group" style="display: none;">
+                        <label class="form-label" for="surgeries-details">Please provide details</label>
+                        <textarea id="surgeries-details" name="surgeries-details" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Do you have any allergies?</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="allergies" value="peanuts"> Peanuts
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="allergies" value="dust"> Dust
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="allergies" value="penicillin"> Penicillin
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="allergies" value="dairy"> Dairy
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="allergies" value="other"> Other
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Any recent illness (last 6 months)?</label>
+                        <textarea name="recent_illness" class="form-control" rows="2" placeholder="e.g. Dengue, Viral Fever"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Vitals Tracking Modal -->
+        <div id="vitals-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Vitals Tracking</h2>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="vitals-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label" for="systolic">Blood Pressure - Systolic (mmHg)</label>
+                            <input type="number" id="systolic" name="systolic" class="form-control" min="70" max="250">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="diastolic">Blood Pressure - Diastolic (mmHg)</label>
+                            <input type="number" id="diastolic" name="diastolic" class="form-control" min="40" max="150">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="heart-rate">Resting Heart Rate (bpm)</label>
+                        <input type="number" id="heart-rate" name="heart-rate" class="form-control" min="30" max="200" placeholder="e.g., 70 bpm">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="blood-sugar">Fasting Blood Sugar (mg/dL)</label>
+                        <input type="number" id="blood-sugar" name="blood-sugar" class="form-control" min="30" max="600" placeholder="e.g., 95 mg/dL">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="total-cholesterol">Total Cholesterol (mg/dL)</label>
+                        <input type="number" id="total-cholesterol" name="total-cholesterol" class="form-control" min="50" max="500" placeholder="e.g., 180 mg/dL">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="oxygen">SpO₂ (Oxygen Saturation) (%)</label>
+                        <input type="number" id="oxygen" name="oxygen" class="form-control" min="70" max="100" placeholder="e.g., 97%">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="temperature">Body Temperature (°C)</label>
+                        <input type="number" id="temperature" name="temperature" class="form-control" min="35" max="42" step="0.1" placeholder="e.g., 36.8°C">
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Mental & Emotional Health Modal -->
+        <div id="mental-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Mental & Emotional Health</h2>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="mental-form">
+                    <div class="form-group">
+                        <label class="form-label">How often do you feel stressed?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="stress_frequency" value="never" required> Never
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="stress_frequency" value="rarely"> Rarely
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="stress_frequency" value="sometimes"> Sometimes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="stress_frequency" value="often"> Often
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="stress_frequency" value="very_often"> Very often
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Rate your stress level (1-10)</label>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">1 (Low)</span>
+                            <input type="range" name="stress_level" min="1" max="10" class="w-full" required>
+                            <span class="text-sm text-gray-600">10 (High)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Have you ever experienced depression?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="depression" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="depression" value="no"> No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Do you practice mindfulness/meditation?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="mindfulness" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="mindfulness" value="no"> No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Preventive Checkups Modal -->
+        <div id="checkups-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Preventive Checkups</h2>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="checkups-form">
+                    <div class="form-group">
+                        <label class="form-label">When was your last health checkup?</label>
+                        <select name="last_checkup" class="form-control" required>
+                            <option value="">Select an option</option>
+                            <option value="less_than_6_months">Less than 6 months ago</option>
+                            <option value="6_to_12_months">6-12 months ago</option>
+                            <option value="1_to_2_years">1-2 years ago</option>
+                            <option value="more_than_2_years">More than 2 years ago</option>
+                            <option value="never">Never had one</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Are your vaccinations up to date?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="vaccinations" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="vaccinations" value="no"> No
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="vaccinations" value="unsure"> Unsure
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Do you go for regular dental checkups?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="dental_checkups" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="dental_checkups" value="no"> No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Any uploaded lab reports?</label>
+                        <input type="file" name="lab_reports" class="form-control" accept=".pdf,.csv">
+                        <p class="text-sm text-gray-500 mt-1">Upload PDF or CSV files</p>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Menstrual Health Modal -->
+        <div id="menstrual-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Menstrual Health</h2>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="menstrual-form">
+                    <div class="form-group">
+                        <label class="form-label">Do you want to track your period?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="track_period" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="track_period" value="no"> No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="period-tracking-questions" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label" for="last-period">Date of last period</label>
+                            <input type="date" id="last-period" name="last-period" class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="cycle-length">Average cycle length (days)</label>
+                            <input type="number" id="cycle-length" name="cycle-length" class="form-control" min="20" max="45" placeholder="e.g., 28 days">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="flow-duration">Duration of flow (days)</label>
+                            <input type="number" id="flow-duration" name="flow-duration" class="form-control" min="1" max="10" placeholder="e.g., 5 days">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Are your cycles regular?</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="regular_cycles" value="yes"> Yes
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="regular_cycles" value="no"> No
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="regular_cycles" value="sometimes"> Sometimes
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Do you experience PMS symptoms?</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="pms_symptoms" value="cramps"> Cramps
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="pms_symptoms" value="mood_swings"> Mood Swings
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="pms_symptoms" value="acne"> Acne
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="pms_symptoms" value="bloating"> Bloating
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="pms_symptoms" value="headaches"> Headaches
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="pms_symptoms" value="fatigue"> Fatigue
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Are you on contraceptive pills?</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="contraceptive_pills" value="yes"> Yes
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="contraceptive_pills" value="no"> No
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Wellness Device Tracking Modal -->
+        <div id="device-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Wellness Device Tracking</h2>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="device-form">
+                    <div class="form-group">
+                        <label class="form-label">Do you use a smartwatch or fitness band?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="use_device" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="use_device" value="no"> No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="device-questions" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">Which device do you use?</label>
+                            <select name="device_type" class="form-control">
+                                <option value="">Select an option</option>
+                                <option value="apple_watch">Apple Watch</option>
+                                <option value="fitbit">Fitbit</option>
+                                <option value="garmin">Garmin</option>
+                                <option value="samsung">Samsung Galaxy Watch</option>
+                                <option value="mi_band">Mi Band</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Do you want to sync with Google Fit?</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="sync_google_fit" value="yes"> Yes
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Would you like to enter manual activity?</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="manual_activity" value="yes" required> Yes
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="manual_activity" value="no"> No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Completion Message -->
+        <div id="completion-message" class="hidden mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 class="text-xl font-bold text-blue-800 mb-2">Questionnaire Complete!</h2>
+            <p class="text-blue-700">Thank you for completing your health profile. Your personalized health insights are now available.</p>
+            <button class="mt-4 btn btn-primary">View Health Insights</button>
+        </div>
+    </div>
+
+    <!-- Chatbot Button -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="chatbot-toggle" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 transform hover:scale-110">
+            <i class="fas fa-comments text-xl"></i>
+        </button>
+    </div>
+    
+    <!-- Chatbot Interface -->
+    <div id="chatbot-interface" class="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 hidden">
+        <div class="bg-indigo-600 text-white p-4 rounded-t-lg">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-robot mr-2"></i>
+                    <span class="font-semibold">Health Assistant</span>
+                </div>
+                <button id="chatbot-close" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="chatbot-messages" class="h-64 overflow-y-auto p-4 space-y-3">
+            <div class="flex items-start">
+                <div class="bg-indigo-100 text-indigo-800 rounded-lg p-3 max-w-xs">
+                    <p class="text-sm">Hi! I can see you're completing the Health Questionnaire. I can help you understand the questions and provide guidance. What would you like to know about the assessment?</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-gray-200">
+            <div class="flex space-x-2">
+                <input type="text" id="chatbot-input" placeholder="Ask me anything..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button id="chatbot-send" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu functionality
+            const mobileMenuButton = document.querySelector('.mobile-menu-button');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+            
+            // Chatbot functionality
+            const chatbotToggle = document.getElementById('chatbot-toggle');
+            const chatbotInterface = document.getElementById('chatbot-interface');
+            const chatbotClose = document.getElementById('chatbot-close');
+            const chatbotInput = document.getElementById('chatbot-input');
+            const chatbotSend = document.getElementById('chatbot-send');
+            const chatbotMessages = document.getElementById('chatbot-messages');
+            
+            // User context tracking
+            let userContext = {
+                currentPage: 'questionnaire',
+                currentSection: 'personal',
+                completedSections: 0,
+                lastAction: 'page-load'
+            };
+            
+            // Toggle chatbot
+            chatbotToggle.addEventListener('click', () => {
+                chatbotInterface.classList.toggle('hidden');
+                if (!chatbotInterface.classList.contains('hidden')) {
+                    chatbotInput.focus();
+                }
+            });
+            
+            // Close chatbot
+            chatbotClose.addEventListener('click', () => {
+                chatbotInterface.classList.add('hidden');
+            });
+            
+            // Send message
+            function sendMessage() {
+                const message = chatbotInput.value.trim();
+                if (!message) return;
+                
+                // Add user message
+                addMessage(message, 'user');
+                chatbotInput.value = '';
+                
+                // Generate contextual response
+                const response = generateContextualResponse(message);
+                setTimeout(() => {
+                    addMessage(response, 'bot');
+                }, 500);
+            }
+            
+            chatbotSend.addEventListener('click', sendMessage);
+            chatbotInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Add message to chat
+            function addMessage(message, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'flex items-start';
+                
+                if (sender === 'user') {
+                    messageDiv.innerHTML = `
+                        <div class="ml-auto bg-indigo-600 text-white rounded-lg p-3 max-w-xs">
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="bg-indigo-100 text-indigo-800 rounded-lg p-3 max-w-xs">
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    `;
+                }
+                
+                chatbotMessages.appendChild(messageDiv);
+                chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            }
+            
+            // Generate contextual responses for questionnaire
+            function generateContextualResponse(message) {
+                const lowerMessage = message.toLowerCase();
+                
+                if (lowerMessage.includes('personal info') || lowerMessage.includes('basic information')) {
+                    return "The Personal Information section collects your basic details like name, age, gender, and contact information. This helps create your health profile and enables personalized recommendations.";
+                }
+                
+                if (lowerMessage.includes('lifestyle') || lowerMessage.includes('daily routine')) {
+                    return "The Lifestyle section asks about your daily habits, exercise routine, sleep patterns, and stress levels. This information helps assess your overall health risk factors.";
+                }
+                
+                if (lowerMessage.includes('medical history') || lowerMessage.includes('health history')) {
+                    return "The Medical History section covers your past illnesses, surgeries, medications, and family health history. This is crucial for understanding your health risks and providing accurate assessments.";
+                }
+                
+                if (lowerMessage.includes('vitals') || lowerMessage.includes('measurements')) {
+                    return "The Vitals section collects your current health measurements like blood pressure, heart rate, weight, and height. These are key indicators of your current health status.";
+                }
+                
+                if (lowerMessage.includes('mental health') || lowerMessage.includes('emotional')) {
+                    return "The Mental Health section assesses your emotional well-being, stress levels, and mental health concerns. Mental health is an important part of overall wellness.";
+                }
+                
+                if (lowerMessage.includes('diet') || lowerMessage.includes('nutrition') || lowerMessage.includes('eating')) {
+                    return "The Diet & Nutrition section asks about your eating habits, food preferences, and dietary restrictions. This helps provide personalized nutrition recommendations.";
+                }
+                
+                if (lowerMessage.includes('social') || lowerMessage.includes('support')) {
+                    return "The Social & Support section explores your social connections, support systems, and living environment. Social factors significantly impact health outcomes.";
+                }
+                
+                if (lowerMessage.includes('help') || lowerMessage.includes('how to')) {
+                    return "I can help you understand each section of the questionnaire, explain why certain questions are asked, and provide guidance on how to answer them accurately. What section would you like help with?";
+                }
+                
+                if (lowerMessage.includes('privacy') || lowerMessage.includes('security')) {
+                    return "Your health information is protected with industry-standard encryption. We follow strict privacy guidelines and never share your data without your consent. Your privacy is our priority.";
+                }
+                
+                if (lowerMessage.includes('complete') || lowerMessage.includes('finish')) {
+                    const completedCount = Object.values(completedSections).filter(Boolean).length;
+                    return `You've completed ${completedCount} out of 8 sections. Keep going! The more complete your questionnaire, the better our AI can provide personalized health insights.`;
+                }
+                
+                // Default response
+                return "I'm here to help you complete the Health Questionnaire! I can explain each section, answer questions about specific items, and provide guidance. What would you like to know?";
+            }
+            
+            // Update context when sections are completed
+            function updateContextOnSectionComplete(sectionName) {
+                userContext.currentSection = sectionName;
+                userContext.completedSections = Object.values(completedSections).filter(Boolean).length;
+                userContext.lastAction = 'section-completed';
+            }
+            
+            // Universal Search Functionality
+            const universalSearch = document.getElementById('universal-search');
+            const searchResults = document.getElementById('search-results');
+            
+            // Search database - all features across HealthNet
+            const searchDatabase = [
+                {
+                    title: "Dashboard",
+                    description: "View health metrics, risk assessments, and AI insights",
+                    category: "Navigation",
+                    url: "dashboard.html",
+                    keywords: ["dashboard", "health metrics", "risk assessment", "ai insights", "vitals", "heart rate", "blood pressure", "glucose", "activity", "steps", "calories", "upload report", "medical report"]
+                },
+                {
+                    title: "Health Questionnaire",
+                    description: "Complete comprehensive health assessment",
+                    category: "Assessment",
+                    url: "questionnaire.html",
+                    keywords: ["questionnaire", "health assessment", "personal info", "lifestyle", "medical history", "vitals", "mental health", "diet", "nutrition", "social support", "menstrual health", "device tracking"]
+                },
+                {
+                    title: "Food Tracker",
+                    description: "Track nutrition, calories, and meal planning",
+                    category: "Nutrition",
+                    url: "food tracker.html",
+                    keywords: ["food tracker", "nutrition", "calories", "meal planning", "add food", "track meals", "macro tracking", "protein", "carbs", "fat", "exercise", "calorie goals", "weight management"]
+                },
+                {
+                    title: "Add Food",
+                    description: "Log meals and track nutrition intake",
+                    category: "Food Tracker",
+                    url: "food tracker.html#add-food",
+                    keywords: ["add food", "log meal", "track nutrition", "calorie counting", "meal logging", "food database", "quick add", "search food"]
+                },
+                {
+                    title: "Set Nutrition Goals",
+                    description: "Configure daily calorie and macro targets",
+                    category: "Food Tracker",
+                    url: "food tracker.html#goals",
+                    keywords: ["nutrition goals", "calorie goals", "macro goals", "protein goals", "carb goals", "fat goals", "weight goals", "fitness goals"]
+                },
+                {
+                    title: "Add Exercise",
+                    description: "Log workouts and track calories burned",
+                    category: "Food Tracker",
+                    url: "food tracker.html#exercise",
+                    keywords: ["add exercise", "workout", "calories burned", "fitness tracking", "exercise log", "activity tracking", "gym", "running", "walking"]
+                },
+                {
+                    title: "Upload Medical Report",
+                    description: "Upload and analyze medical reports with AI",
+                    category: "Dashboard",
+                    url: "dashboard.html#upload",
+                    keywords: ["upload report", "medical report", "blood test", "lab results", "ai analysis", "health data", "medical documents", "pdf upload"]
+                },
+                {
+                    title: "Personal Information",
+                    description: "Update personal details and contact information",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#personal",
+                    keywords: ["personal info", "contact details", "name", "age", "gender", "address", "phone", "email", "basic information"]
+                },
+                {
+                    title: "Lifestyle Assessment",
+                    description: "Complete lifestyle and daily routine questionnaire",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#lifestyle",
+                    keywords: ["lifestyle", "daily routine", "exercise routine", "sleep patterns", "stress levels", "work habits", "activity level", "daily habits"]
+                },
+                {
+                    title: "Medical History",
+                    description: "Document medical history and family health",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#medical",
+                    keywords: ["medical history", "family history", "past illnesses", "surgeries", "medications", "conditions", "allergies", "health history"]
+                },
+                {
+                    title: "Vital Signs",
+                    description: "Record current health measurements",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#vitals",
+                    keywords: ["vital signs", "blood pressure", "heart rate", "weight", "height", "bmi", "measurements", "current health", "health metrics"]
+                },
+                {
+                    title: "Mental Health Assessment",
+                    description: "Evaluate emotional well-being and mental health",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#mental",
+                    keywords: ["mental health", "emotional well-being", "stress", "anxiety", "depression", "mood", "mental state", "psychological health"]
+                },
+                {
+                    title: "Diet & Nutrition Assessment",
+                    description: "Assess eating habits and dietary preferences",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#diet",
+                    keywords: ["diet", "nutrition", "eating habits", "food preferences", "dietary restrictions", "meal patterns", "nutritional assessment"]
+                },
+                {
+                    title: "Social & Support Assessment",
+                    description: "Evaluate social connections and support systems",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#social",
+                    keywords: ["social support", "social connections", "family support", "friends", "living environment", "social factors", "support system"]
+                },
+                {
+                    title: "Health Score",
+                    description: "View overall health score and risk assessment",
+                    category: "Dashboard",
+                    url: "dashboard.html#health-score",
+                    keywords: ["health score", "overall health", "risk assessment", "health rating", "wellness score", "health status"]
+                },
+                {
+                    title: "Weekly Reports",
+                    description: "View weekly health trends and insights",
+                    category: "Dashboard",
+                    url: "dashboard.html#reports",
+                    keywords: ["weekly reports", "health trends", "insights", "progress reports", "health analytics", "trends"]
+                },
+                {
+                    title: "AI Health Assistant",
+                    description: "Get help from AI assistant",
+                    category: "Support",
+                    url: "#chatbot",
+                    keywords: ["ai assistant", "help", "support", "chatbot", "health assistant", "guidance", "questions", "assistance"]
+                }
+            ];
+            
+            // Search functionality
+            universalSearch.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                
+                if (query.length < 2) {
+                    searchResults.classList.add('hidden');
+                    return;
+                }
+                
+                // Search through database
+                const results = searchDatabase.filter(item => {
+                    return item.title.toLowerCase().includes(query) ||
+                           item.description.toLowerCase().includes(query) ||
+                           item.keywords.some(keyword => keyword.toLowerCase().includes(query));
+                });
+                
+                displaySearchResults(results);
+            });
+            
+            // Display search results
+            function displaySearchResults(results) {
+                if (results.length === 0) {
+                    searchResults.innerHTML = `
+                        <div class="p-4 text-center text-gray-500">
+                            <i class="fas fa-search mb-2"></i>
+                            <p>No results found</p>
+                        </div>
+                    `;
+                } else {
+                    searchResults.innerHTML = results.map(item => `
+                        <div class="search-result-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" data-url="${item.url}">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-${getIconForCategory(item.category)} text-indigo-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="text-sm font-medium text-gray-900 truncate">${item.title}</h4>
+                                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${item.category}</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-1">${item.description}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                searchResults.classList.remove('hidden');
+                
+                // Add click handlers to results
+                document.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const url = this.getAttribute('data-url');
+                        if (url.startsWith('#')) {
+                            // Handle in-page navigation (like chatbot)
+                            if (url === '#chatbot') {
+                                document.getElementById('chatbot-toggle').click();
+                            }
+                        } else {
+                            window.location.href = url;
+                        }
+                        searchResults.classList.add('hidden');
+                        universalSearch.value = '';
+                    });
+                });
+            }
+            
+            // Get icon for category
+            function getIconForCategory(category) {
+                const icons = {
+                    'Navigation': 'compass',
+                    'Assessment': 'clipboard-list',
+                    'Nutrition': 'apple-alt',
+                    'Food Tracker': 'utensils',
+                    'Dashboard': 'chart-line',
+                    'Questionnaire': 'question-circle',
+                    'Support': 'robot'
+                };
+                return icons[category] || 'search';
+            }
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#universal-search') && !e.target.closest('#search-results')) {
+                    searchResults.classList.add('hidden');
+                }
+            });
+            
+            // Keyboard navigation
+            universalSearch.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    searchResults.classList.add('hidden');
+                    this.blur();
+                }
+            });
+            
+            // Track completed sections
+            // Track completed sections
+            const completedSections = {
+                personal: false,
+                lifestyle: false,
+                medical: false,
+                vitals: false,
+                mental: false,
+                checkups: false,
+                menstrual: false,
+                device: false
+            };
+            
+            // Track if menstrual section is applicable
+            let menstrualApplicable = false;
+            
+            // Get all tiles
+            const tiles = document.querySelectorAll('.tile');
+            
+            // Get all modals
+            const modals = document.querySelectorAll('.modal');
+            
+            // Get all close buttons
+            const closeButtons = document.querySelectorAll('.close-modal');
+            
+            // Get progress elements
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            // Open modal when clicking on a tile
+            tiles.forEach(tile => {
+                tile.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    const modal = document.getElementById(`${section}-modal`);
+                    openModal(modal);
+                });
+            });
+            
+            // Close modal when clicking on close button
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    closeModal(modal);
+                });
+            });
+            
+            // Close modal when clicking outside the modal content
+            modals.forEach(modal => {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === this) {
+                        closeModal(this);
+                    }
+                });
+            });
+            
+            // Handle form submissions
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    const section = this.id.split('-')[0];
+                    const formData = new FormData(this);
+                    
+                    // Process form data
+                    const summary = generateSummary(section, formData);
+                    
+                    // Update tile summary
+                    document.getElementById(`${section}-summary`).textContent = summary;
+                    
+                    // Mark section as completed
+                    completedSections[section] = true;
+                    document.querySelector(`.tile[data-section="${section}"]`).classList.add('completed');
+                    
+                    // Update progress
+                    updateProgress();
+                    
+                    // Close the modal
+                    closeModal(this.closest('.modal'));
+                    
+                    // Check if all sections are completed
+                    checkCompletion();
+                });
+            });
+            
+            // Handle conditional form fields
+            
+            // Medical form - other conditions
+            document.querySelectorAll('input[name="conditions"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const otherConditions = document.getElementById('other-conditions-group');
+                    if (document.querySelector('input[name="conditions"][value="other"]').checked) {
+                        otherConditions.style.display = 'block';
+                    } else {
+                        otherConditions.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Medical form - medications
+            document.querySelectorAll('input[name="medications"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const medicationsDetails = document.getElementById('medications-details-group');
+                    if (this.value === 'yes') {
+                        medicationsDetails.style.display = 'block';
+                    } else {
+                        medicationsDetails.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Medical form - surgeries
+            document.querySelectorAll('input[name="surgeries"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const surgeriesDetails = document.getElementById('surgeries-details-group');
+                    if (this.value === 'yes') {
+                        surgeriesDetails.style.display = 'block';
+                    } else {
+                        surgeriesDetails.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Menstrual health form - track period
+            document.querySelectorAll('input[name="track_period"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const periodTracking = document.getElementById('period-tracking-questions');
+                    if (this.value === 'yes') {
+                        periodTracking.style.display = 'block';
+                    } else {
+                        periodTracking.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Device tracking form - use device
+            document.querySelectorAll('input[name="use_device"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const deviceQuestions = document.getElementById('device-questions');
+                    if (this.value === 'yes') {
+                        deviceQuestions.style.display = 'block';
+                    } else {
+                        deviceQuestions.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Personal form - gender selection to show/hide menstrual tile
+            document.querySelectorAll('input[name="gender"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const menstrualTile = document.getElementById('menstrual-tile');
+                    if (this.value === 'female' || this.value === 'other') {
+                        menstrualTile.classList.remove('hidden');
+                        menstrualApplicable = true;
+                    } else {
+                        menstrualTile.classList.add('hidden');
+                        menstrualApplicable = false;
+                        completedSections.menstrual = true; // Auto-complete for males
+                    }
+                    updateProgress();
+                });
+            });
+            
+            // Functions
+            function openModal(modal) {
+                modal.style.display = 'block';
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeModal(modal) {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }, 300);
+            }
+            
+            function updateProgress() {
+                let totalSections = 7; // Default number of sections (excluding menstrual)
+                if (menstrualApplicable) {
+                    totalSections = 8; // Add menstrual section if applicable
+                }
+                
+                let completedCount = 0;
+                for (const section in completedSections) {
+                    if (completedSections[section]) {
+                        completedCount++;
+                    }
+                }
+                
+                const progressPercentage = Math.round((completedCount / totalSections) * 100);
+                progressFill.style.width = `${progressPercentage}%`;
+                progressText.textContent = `${progressPercentage}% Complete`;
+            }
+            
+            function checkCompletion() {
+                let allCompleted = true;
+                for (const section in completedSections) {
+                    if (!completedSections[section]) {
+                        if (section === 'menstrual' && !menstrualApplicable) {
+                            // Skip menstrual section if not applicable
+                            continue;
+                        }
+                        allCompleted = false;
+                        break;
+                    }
+                }
+                
+                if (allCompleted) {
+                    document.getElementById('completion-message').classList.remove('hidden');
+                    // Scroll to completion message
+                    setTimeout(() => {
+                        document.getElementById('completion-message').scrollIntoView({ behavior: 'smooth' });
+                    }, 300);
+                }
+            }
+            
+            function generateSummary(section, formData) {
+                switch (section) {
+                    case 'personal':
+                        const name = formData.get('name');
+                        const gender = formData.get('gender');
+                        const age = calculateAge(formData.get('dob'));
+                        return `${name}, ${age} years, ${capitalizeFirstLetter(gender)}`;
+                        
+                    case 'lifestyle':
+                        const smoking = formData.get('smoking');
+                        const exercise = formData.get('exercise_frequency');
+                        return `${capitalizeFirstLetter(smoking)} smoker, ${formatValue(exercise)} exercise`;
+                        
+                    case 'medical':
+                        const conditions = formData.getAll('conditions');
+                        if (conditions.length > 0) {
+                            return `${conditions.length} condition(s) reported`;
+                        } else {
+                            return 'No conditions reported';
+                        }
+                        
+                    case 'vitals':
+                        const systolic = formData.get('systolic');
+                        const diastolic = formData.get('diastolic');
+                        if (systolic && diastolic) {
+                            return `BP: ${systolic}/${diastolic} mmHg`;
+                        } else {
+                            return 'Vitals recorded';
+                        }
+                        
+                    case 'mental':
+                        const stressLevel = formData.get('stress_level');
+                        return `Stress level: ${stressLevel}/10`;
+                        
+                    case 'checkups':
+                        const lastCheckup = formData.get('last_checkup');
+                        return `Last checkup: ${formatTimeframe(lastCheckup)}`;
+                        
+                    case 'menstrual':
+                        const trackPeriod = formData.get('track_period');
+                        if (trackPeriod === 'yes') {
+                            return 'Period tracking enabled';
+                        } else {
+                            return 'Period tracking disabled';
+                        }
+                        
+                    case 'device':
+                        const useDevice = formData.get('use_device');
+                        if (useDevice === 'yes') {
+                            const deviceType = formData.get('device_type') || 'device';
+                            return `Using ${formatValue(deviceType)}`;
+                        } else {
+                            return 'No device tracking';
+                        }
+                        
+                    default:
+                        return 'Information added';
+                }
+            }
+            
+            function calculateAge(dateString) {
+                if (!dateString) return '';
+                const today = new Date();
+                const birthDate = new Date(dateString);
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                return age;
+            }
+            
+            function capitalizeFirstLetter(string) {
+                if (!string) return '';
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+            
+            function formatTimeframe(timeframe) {
+                if (!timeframe) return 'Unknown';
+                
+                switch (timeframe) {
+                    case 'less_than_6_months':
+                        return '< 6 months';
+                    case '6_to_12_months':
+                        return '6-12 months';
+                    case '1_to_2_years':
+                        return '1-2 years';
+                    case 'more_than_2_years':
+                        return '> 2 years';
+                    case 'never':
+                        return 'Never';
+                    default:
+                        return formatValue(timeframe);
+                }
+            }
+            
+            function formatValue(value) {
+                if (!value) return '';
+                return value.replace(/_/g, ' ');
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'961d050c41a547f5',t:'MTc1Mjk1NzQ3OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

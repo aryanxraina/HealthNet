@@ -1,0 +1,2465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring__circle {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        
+        .tab {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .tab.active {
+            color: #3b82f6;
+            border-bottom: 2px solid #3b82f6;
+        }
+        
+        .tab:hover:not(.active) {
+            color: #4b5563;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .search-result-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .search-result-item:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .macro-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .carbs-pill {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .protein-pill {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .fat-pill {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .food-item {
+            transition: all 0.2s ease;
+        }
+        
+        .food-item:hover {
+            background-color: #f9fafb;
+        }
+        
+        .food-item:hover .delete-food {
+            opacity: 1;
+        }
+        
+        .delete-food {
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        
+        .meal-header {
+            cursor: pointer;
+        }
+        
+        .meal-header:hover {
+            background-color: #f9fafb;
+        }
+        
+        .date-nav {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .date-nav:hover {
+            color: #3b82f6;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        
+        /* Animation for adding food items */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+        
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #374151;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.75rem;
+        }
+        
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #374151 transparent transparent transparent;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-900">HealthTracker</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="home.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="dashboard.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-chart-line mr-2"></i>Dashboard
+                        </a>
+                        <a href="questionnaire.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-clipboard-list mr-2"></i>Questionnaire
+                        </a>
+                        <a href="food tracker.html" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-utensils mr-2"></i>Food Tracker
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Universal Search -->
+                <div class="relative hidden md:block ml-4">
+                    <div class="relative">
+                        <input type="text" id="universal-search" placeholder="Search HealthNet..." class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Results Dropdown -->
+                    <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden max-h-96 overflow-y-auto">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button type="button" class="mobile-menu-button bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile menu -->
+            <div class="mobile-menu hidden md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="home.html" class="text-gray-500 hover:text-gray-700 block px-3 py-2 rounded-md text-base font-medium">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    <a href="dashboard.html" class="text-gray-500 hover:text-gray-700 block px-3 py-2 rounded-md text-base font-medium">
+                        <i class="fas fa-chart-line mr-2"></i>Dashboard
+                    </a>
+                    <a href="questionnaire.html" class="text-gray-500 hover:text-gray-700 block px-3 py-2 rounded-md text-base font-medium">
+                        <i class="fas fa-clipboard-list mr-2"></i>Questionnaire
+                    </a>
+                    <a href="food tracker.html" class="bg-blue-100 text-blue-700 block px-3 py-2 rounded-md text-base font-medium">
+                        <i class="fas fa-utensils mr-2"></i>Food Tracker
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Nutrition Tracker</h1>
+                <p class="mt-1 text-lg text-gray-600">Track your daily nutrition and calorie intake</p>
+            </div>
+            
+            <!-- Date Navigation -->
+            <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                <div class="date-nav p-2 rounded-full hover:bg-gray-100" id="prev-date">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="text-lg font-medium text-gray-900" id="current-date">Today</div>
+                <div class="date-nav p-2 rounded-full hover:bg-gray-100" id="next-date">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <button class="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors" id="today-btn">Today</button>
+            </div>
+        </div>
+        
+        <!-- View Tabs -->
+        <div class="flex border-b border-gray-200 mb-6">
+            <div class="tab active py-3 px-6 font-medium" data-tab="daily">Daily View</div>
+            <div class="tab py-3 px-6 font-medium" data-tab="weekly">Weekly View</div>
+        </div>
+        
+        <!-- Daily View Content -->
+        <div id="daily-view" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column: Summary -->
+                <div class="lg:col-span-1">
+                    <!-- Calorie Summary Card -->
+                    <div class="card p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Calorie Summary</h2>
+                        
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="relative w-24 h-24">
+                                <svg class="progress-ring" width="100" height="100">
+                                    <circle class="progress-ring__circle-bg" stroke="#e5e7eb" stroke-width="8" fill="transparent" r="40" cx="50" cy="50"/>
+                                    <circle class="progress-ring__circle" id="calorie-progress" stroke="#3b82f6" stroke-width="8" fill="transparent" r="40" cx="50" cy="50"/>
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span class="text-xl font-bold text-gray-800" id="calorie-percentage">0%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 ml-6">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-medium text-gray-500">Consumed</span>
+                                    <span class="text-sm font-semibold text-gray-800" id="calories-consumed">0</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-medium text-gray-500">Burned</span>
+                                    <span class="text-sm font-semibold text-gray-800" id="calories-burned">0</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-medium text-gray-500">Goal</span>
+                                    <span class="text-sm font-semibold text-gray-800" id="calories-goal">2,000</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-500">Remaining</span>
+                                    <span class="text-sm font-semibold text-blue-600" id="calories-remaining">2,000</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <button class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors" id="add-exercise-btn">
+                                <i class="fas fa-running mr-2"></i>Add Exercise
+                            </button>
+                            <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors" id="adjust-goal-btn">
+                                <i class="fas fa-sliders-h mr-2"></i>Adjust Goal
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Macronutrients Card -->
+                    <div class="card p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Macronutrients</h2>
+                        
+                        <div class="space-y-4">
+                            <!-- Carbs -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="flex items-center">
+                                        <span class="macro-pill carbs-pill mr-2">C</span>
+                                        <span class="text-sm font-medium text-gray-700">Carbs</span>
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-800">
+                                        <span id="carbs-consumed">0</span>g / <span id="carbs-goal">250</span>g
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" id="carbs-progress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Protein -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="flex items-center">
+                                        <span class="macro-pill protein-pill mr-2">P</span>
+                                        <span class="text-sm font-medium text-gray-700">Protein</span>
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-800">
+                                        <span id="protein-consumed">0</span>g / <span id="protein-goal">125</span>g
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" id="protein-progress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Fat -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="flex items-center">
+                                        <span class="macro-pill fat-pill mr-2">F</span>
+                                        <span class="text-sm font-medium text-gray-700">Fat</span>
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-800">
+                                        <span id="fat-consumed">0</span>g / <span id="fat-goal">65</span>g
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" id="fat-progress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-500">Macro Ratio</span>
+                                <span class="text-xs text-gray-500">Target: 50% / 25% / 25%</span>
+                            </div>
+                            <div class="w-full h-4 flex rounded-full overflow-hidden">
+                                <div class="bg-blue-500 h-full" id="carbs-ratio" style="width: 50%"></div>
+                                <div class="bg-green-500 h-full" id="protein-ratio" style="width: 25%"></div>
+                                <div class="bg-yellow-500 h-full" id="fat-ratio" style="width: 25%"></div>
+                            </div>
+                            <div class="flex justify-between mt-2 text-xs text-gray-500">
+                                <span>Carbs <span id="carbs-ratio-text">50%</span></span>
+                                <span>Protein <span id="protein-ratio-text">25%</span></span>
+                                <span>Fat <span id="fat-ratio-text">25%</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nutrition Insights Card -->
+                    <div class="card p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Nutrition Insights</h2>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500 mb-1">Sugar</div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-semibold text-gray-800" id="sugar-consumed">0g</span>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-gray-400"></i>
+                                        <span class="tooltip-text">Limit sugar intake to less than 50g per day</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500 mb-1">Fiber</div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-semibold text-gray-800" id="fiber-consumed">0g</span>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-gray-400"></i>
+                                        <span class="tooltip-text">Aim for 25-30g of fiber daily</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500 mb-1">Sodium</div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-semibold text-gray-800" id="sodium-consumed">0mg</span>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-gray-400"></i>
+                                        <span class="tooltip-text">Keep sodium under 2,300mg daily</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500 mb-1">Water</div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-semibold text-gray-800" id="water-consumed">0ml</span>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-gray-400"></i>
+                                        <span class="tooltip-text">Aim for 2,000-3,000ml daily</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 text-sm text-gray-500">
+                            <p class="mb-2"><i class="fas fa-lightbulb text-yellow-500 mr-2"></i> <span id="nutrition-tip">Try to include more fiber-rich foods in your diet for better digestion.</span></p>
+                            <p><i class="fas fa-chart-line text-blue-500 mr-2"></i> <span id="nutrition-trend">Your protein intake has been consistent this week. Great job!</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Food Log -->
+                <div class="lg:col-span-2">
+                    <!-- Add Food Card -->
+                    <div class="card p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Add Food</h2>
+                        
+                        <div class="relative">
+                            <div class="flex">
+                                <input type="text" id="food-search" class="flex-1 p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Search for a food...">
+                                <button id="search-btn" class="px-4 py-3 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 transition-colors">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            
+                            <div id="search-results" class="search-results hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                <!-- Search results will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <button class="quick-add px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors" data-food="Banana">Banana</button>
+                            <button class="quick-add px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors" data-food="Chicken Breast">Chicken Breast</button>
+                            <button class="quick-add px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors" data-food="Egg">Egg</button>
+                            <button class="quick-add px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors" data-food="Greek Yogurt">Greek Yogurt</button>
+                            <button class="quick-add px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors" data-food="Oatmeal">Oatmeal</button>
+                            <button class="quick-add px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors" data-food="Salmon">Salmon</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Food Log Card -->
+                    <div class="card p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Food Log</h2>
+                        
+                        <!-- Breakfast -->
+                        <div class="mb-6">
+                            <div class="meal-header flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-coffee text-yellow-600 mr-3"></i>
+                                    <h3 class="font-medium text-gray-800">Breakfast</h3>
+                                </div>
+                                <div class="text-sm font-medium text-gray-600" id="breakfast-calories">0 cal</div>
+                            </div>
+                            
+                            <div id="breakfast-items" class="space-y-2">
+                                <!-- Breakfast items will be added here -->
+                                <div class="text-sm text-gray-500 italic text-center py-2" id="breakfast-empty">No foods added yet</div>
+                            </div>
+                            
+                            <button class="add-food-btn mt-2 w-full py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors" data-meal="breakfast">
+                                <i class="fas fa-plus mr-1"></i> Add Food to Breakfast
+                            </button>
+                        </div>
+                        
+                        <!-- Lunch -->
+                        <div class="mb-6">
+                            <div class="meal-header flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-utensils text-green-600 mr-3"></i>
+                                    <h3 class="font-medium text-gray-800">Lunch</h3>
+                                </div>
+                                <div class="text-sm font-medium text-gray-600" id="lunch-calories">0 cal</div>
+                            </div>
+                            
+                            <div id="lunch-items" class="space-y-2">
+                                <!-- Lunch items will be added here -->
+                                <div class="text-sm text-gray-500 italic text-center py-2" id="lunch-empty">No foods added yet</div>
+                            </div>
+                            
+                            <button class="add-food-btn mt-2 w-full py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors" data-meal="lunch">
+                                <i class="fas fa-plus mr-1"></i> Add Food to Lunch
+                            </button>
+                        </div>
+                        
+                        <!-- Dinner -->
+                        <div class="mb-6">
+                            <div class="meal-header flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-moon text-indigo-600 mr-3"></i>
+                                    <h3 class="font-medium text-gray-800">Dinner</h3>
+                                </div>
+                                <div class="text-sm font-medium text-gray-600" id="dinner-calories">0 cal</div>
+                            </div>
+                            
+                            <div id="dinner-items" class="space-y-2">
+                                <!-- Dinner items will be added here -->
+                                <div class="text-sm text-gray-500 italic text-center py-2" id="dinner-empty">No foods added yet</div>
+                            </div>
+                            
+                            <button class="add-food-btn mt-2 w-full py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors" data-meal="dinner">
+                                <i class="fas fa-plus mr-1"></i> Add Food to Dinner
+                            </button>
+                        </div>
+                        
+                        <!-- Snacks -->
+                        <div>
+                            <div class="meal-header flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-apple-alt text-red-600 mr-3"></i>
+                                    <h3 class="font-medium text-gray-800">Snacks</h3>
+                                </div>
+                                <div class="text-sm font-medium text-gray-600" id="snacks-calories">0 cal</div>
+                            </div>
+                            
+                            <div id="snacks-items" class="space-y-2">
+                                <!-- Snack items will be added here -->
+                                <div class="text-sm text-gray-500 italic text-center py-2" id="snacks-empty">No foods added yet</div>
+                            </div>
+                            
+                            <button class="add-food-btn mt-2 w-full py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors" data-meal="snacks">
+                                <i class="fas fa-plus mr-1"></i> Add Food to Snacks
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weekly View Content -->
+        <div id="weekly-view" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column: Weekly Summary -->
+                <div class="lg:col-span-1">
+                    <!-- Weekly Calorie Summary Card -->
+                    <div class="card p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Weekly Calorie Summary</h2>
+                        
+                        <div class="mb-6" style="height: 200px; position: relative;">
+                            <canvas id="weekly-calories-chart"></canvas>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500 mb-1">Avg. Daily Calories</div>
+                                <div class="text-lg font-semibold text-gray-800" id="avg-daily-calories">0</div>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500 mb-1">Total Weekly</div>
+                                <div class="text-lg font-semibold text-gray-800" id="total-weekly-calories">0</div>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500 mb-1">Highest Day</div>
+                                <div class="text-lg font-semibold text-gray-800" id="highest-day">N/A</div>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500 mb-1">Weekly Goal</div>
+                                <div class="text-lg font-semibold text-gray-800" id="weekly-goal">14,000</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Weekly Macros Card -->
+                    <div class="card p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Weekly Macronutrients</h2>
+                        
+                        <div class="mb-6" style="height: 200px; position: relative;">
+                            <canvas id="weekly-macros-chart"></canvas>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-sm font-medium text-gray-500 mb-1">Avg. Carbs</div>
+                                <div class="text-lg font-semibold text-blue-600" id="avg-carbs">0g</div>
+                            </div>
+                            
+                            <div>
+                                <div class="text-sm font-medium text-gray-500 mb-1">Avg. Protein</div>
+                                <div class="text-lg font-semibold text-green-600" id="avg-protein">0g</div>
+                            </div>
+                            
+                            <div>
+                                <div class="text-sm font-medium text-gray-500 mb-1">Avg. Fat</div>
+                                <div class="text-lg font-semibold text-yellow-600" id="avg-fat">0g</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Weekly Details -->
+                <div class="lg:col-span-2">
+                    <!-- Weekly Insights Card -->
+                    <div class="card p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Weekly Insights</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-700 mb-3">Calorie Balance</h3>
+                                <div style="height: 180px; position: relative;">
+                                    <canvas id="calorie-balance-chart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-700 mb-3">Nutrition Quality</h3>
+                                <div style="height: 180px; position: relative;">
+                                    <canvas id="nutrition-quality-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                            <h3 class="text-lg font-medium text-blue-800 mb-2">AI Insights</h3>
+                            <p class="text-blue-700" id="ai-insight">Based on your weekly data, increasing your protein intake by 10-15g per day could help you reach your fitness goals more effectively. Try adding more lean protein sources to your meals.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Daily Breakdown Card -->
+                    <div class="card p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Daily Breakdown</h2>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Calories</th>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carbs</th>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Protein</th>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fat</th>
+                                        <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="weekly-breakdown-table">
+                                    <!-- Table rows will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-between">
+                            <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                                <i class="fas fa-download mr-2"></i>Export Data
+                            </button>
+                            <button class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                                <i class="fas fa-chart-line mr-2"></i>View Detailed Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Food Modal -->
+    <div id="add-food-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900" id="modal-title">Add Food to Breakfast</h3>
+                <button id="close-food-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="food-details">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Food Name</label>
+                    <input type="text" id="food-name" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter food name">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Serving Size</label>
+                        <input type="number" id="serving-size" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="1" min="0.1" step="0.1">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                        <select id="serving-unit" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="serving">serving</option>
+                            <option value="g">grams (g)</option>
+                            <option value="oz">ounces (oz)</option>
+                            <option value="cup">cup</option>
+                            <option value="tbsp">tablespoon</option>
+                            <option value="tsp">teaspoon</option>
+                            <option value="ml">milliliter (ml)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Calories</label>
+                    <input type="number" id="food-calories" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Calories per serving" min="0">
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Carbs (g)</label>
+                        <input type="number" id="food-carbs" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" min="0" step="0.1">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Protein (g)</label>
+                        <input type="number" id="food-protein" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" min="0" step="0.1">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fat (g)</label>
+                        <input type="number" id="food-fat" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" min="0" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sugar (g)</label>
+                        <input type="number" id="food-sugar" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" min="0" step="0.1">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fiber (g)</label>
+                        <input type="number" id="food-fiber" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" min="0" step="0.1">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sodium (mg)</label>
+                        <input type="number" id="food-sodium" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0" min="0">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-food" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button id="save-food" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">Add Food</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Exercise Modal -->
+    <div id="add-exercise-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900">Add Exercise</h3>
+                <button id="close-exercise-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Exercise Type</label>
+                    <select id="exercise-type" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select exercise type</option>
+                        <option value="running">Running</option>
+                        <option value="walking">Walking</option>
+                        <option value="cycling">Cycling</option>
+                        <option value="swimming">Swimming</option>
+                        <option value="weight_training">Weight Training</option>
+                        <option value="yoga">Yoga</option>
+                        <option value="hiit">HIIT</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                    <input type="number" id="exercise-duration" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" min="1" value="30">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Intensity</label>
+                    <select id="exercise-intensity" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="low">Low</option>
+                        <option value="moderate" selected>Moderate</option>
+                        <option value="high">High</option>
+                        <option value="very_high">Very High</option>
+                    </select>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Calories Burned</label>
+                    <input type="number" id="exercise-calories" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" min="1" placeholder="Estimated calories">
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-exercise" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button id="save-exercise" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">Add Exercise</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Adjust Goal Modal -->
+    <div id="adjust-goal-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900">Adjust Nutrition Goals</h3>
+                <button id="close-goal-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Daily Calorie Goal</label>
+                    <input type="number" id="calorie-goal" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" min="1000" max="5000" value="2000">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Macro Distribution</label>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Carbs (%)</label>
+                            <input type="number" id="carbs-percent" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" min="10" max="80" value="50">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Protein (%)</label>
+                            <input type="number" id="protein-percent" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" min="10" max="60" value="25">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Fat (%)</label>
+                            <input type="number" id="fat-percent" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" min="10" max="60" value="25">
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">Total should equal 100%: <span id="macro-total">100</span>%</div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Goal Type</label>
+                    <select id="goal-type" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="maintain">Maintain Weight</option>
+                        <option value="lose">Lose Weight</option>
+                        <option value="gain">Gain Weight</option>
+                    </select>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-goal" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button id="save-goal" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">Save Goals</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chatbot Button -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="chatbot-toggle" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 transform hover:scale-110">
+            <i class="fas fa-comments text-xl"></i>
+        </button>
+    </div>
+    
+    <!-- Chatbot Interface -->
+    <div id="chatbot-interface" class="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 hidden">
+        <div class="bg-blue-600 text-white p-4 rounded-t-lg">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-robot mr-2"></i>
+                    <span class="font-semibold">Health Assistant</span>
+                </div>
+                <button id="chatbot-close" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="chatbot-messages" class="h-64 overflow-y-auto p-4 space-y-3">
+            <div class="flex items-start">
+                <div class="bg-blue-100 text-blue-800 rounded-lg p-3 max-w-xs">
+                    <p class="text-sm">Hi! I'm your health assistant. I can see you're using the Food Tracker. How can I help you today?</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-gray-200">
+            <div class="flex space-x-2">
+                <input type="text" id="chatbot-input" placeholder="Ask me anything..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="chatbot-send" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing app...');
+            
+            try {
+            // Sample food database for search
+            const foodDatabase = [
+                { name: "Apple", calories: 95, carbs: 25, protein: 0.5, fat: 0.3, sugar: 19, fiber: 4, sodium: 2, serving: "1 medium (182g)" },
+                { name: "Banana", calories: 105, carbs: 27, protein: 1.3, fat: 0.4, sugar: 14, fiber: 3.1, sodium: 1, serving: "1 medium (118g)" },
+                { name: "Chicken Breast", calories: 165, carbs: 0, protein: 31, fat: 3.6, sugar: 0, fiber: 0, sodium: 74, serving: "100g (cooked)" },
+                { name: "Egg", calories: 72, carbs: 0.6, protein: 6.3, fat: 5, sugar: 0.6, fiber: 0, sodium: 71, serving: "1 large (50g)" },
+                { name: "Greek Yogurt", calories: 100, carbs: 3.6, protein: 17, fat: 0.4, sugar: 3.6, fiber: 0, sodium: 55, serving: "170g (container)" },
+                { name: "Oatmeal", calories: 150, carbs: 27, protein: 5, fat: 2.5, sugar: 1, fiber: 4, sodium: 0, serving: "40g (dry)" },
+                { name: "Salmon", calories: 206, carbs: 0, protein: 22, fat: 13, sugar: 0, fiber: 0, sodium: 59, serving: "100g (cooked)" },
+                { name: "Brown Rice", calories: 216, carbs: 45, protein: 5, fat: 1.8, sugar: 0.7, fiber: 3.5, sodium: 10, serving: "1 cup (195g)" },
+                { name: "Avocado", calories: 234, carbs: 12, protein: 2.9, fat: 21, sugar: 0.7, fiber: 9.8, sodium: 10, serving: "1 medium (150g)" },
+                { name: "Broccoli", calories: 55, carbs: 11, protein: 3.7, fat: 0.6, sugar: 2.6, fiber: 5.2, sodium: 33, serving: "1 cup (91g)" },
+                { name: "Sweet Potato", calories: 112, carbs: 26, protein: 2, fat: 0.1, sugar: 5.4, fiber: 3.8, sodium: 72, serving: "1 medium (130g)" },
+                { name: "Almonds", calories: 164, carbs: 6.1, protein: 6, fat: 14, sugar: 1.2, fiber: 3.5, sodium: 0, serving: "28g (1oz)" },
+                { name: "Milk", calories: 122, carbs: 12, protein: 8.1, fat: 4.8, sugar: 12, fiber: 0, sodium: 115, serving: "1 cup (244g)" },
+                { name: "Bread", calories: 79, carbs: 15, protein: 2.6, fat: 1, sugar: 1.6, fiber: 1.1, sodium: 137, serving: "1 slice (30g)" },
+                { name: "Pasta", calories: 221, carbs: 43, protein: 8.1, fat: 1.3, sugar: 0.8, fiber: 2.5, sodium: 1, serving: "1 cup (140g)" }
+            ];
+            
+            // User data
+            let userData = {
+                calorieGoal: 2000,
+                carbsGoal: 250, // 50% of calories
+                proteinGoal: 125, // 25% of calories
+                fatGoal: 65, // 25% of calories
+                caloriesBurned: 0,
+                meals: {
+                    breakfast: [],
+                    lunch: [],
+                    dinner: [],
+                    snacks: []
+                },
+                currentDate: new Date(),
+                weeklyData: []
+            };
+            
+            // Initialize weekly data after userData is defined
+            userData.weeklyData = generateSampleWeeklyData();
+            
+            // Current meal for adding food
+            let currentMeal = '';
+            
+            // DOM elements
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const foodSearch = document.getElementById('food-search');
+            const searchBtn = document.getElementById('search-btn');
+            const searchResults = document.getElementById('search-results');
+            const quickAddBtns = document.querySelectorAll('.quick-add');
+            const addFoodBtns = document.querySelectorAll('.add-food-btn');
+            const addFoodModal = document.getElementById('add-food-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const closeFoodModal = document.getElementById('close-food-modal');
+            const cancelFood = document.getElementById('cancel-food');
+            const saveFood = document.getElementById('save-food');
+            const addExerciseBtn = document.getElementById('add-exercise-btn');
+            const addExerciseModal = document.getElementById('add-exercise-modal');
+            const closeExerciseModal = document.getElementById('close-exercise-modal');
+            const cancelExercise = document.getElementById('cancel-exercise');
+            const saveExercise = document.getElementById('save-exercise');
+            const adjustGoalBtn = document.getElementById('adjust-goal-btn');
+            const adjustGoalModal = document.getElementById('adjust-goal-modal');
+            const closeGoalModal = document.getElementById('close-goal-modal');
+            const cancelGoal = document.getElementById('cancel-goal');
+            const saveGoal = document.getElementById('save-goal');
+            const prevDateBtn = document.getElementById('prev-date');
+            const nextDateBtn = document.getElementById('next-date');
+            const todayBtn = document.getElementById('today-btn');
+            const currentDateDisplay = document.getElementById('current-date');
+            
+            // Initialize charts
+            let weeklyCaloriesChart, weeklyMacrosChart, calorieBalanceChart, nutritionQualityChart;
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Hide all tab contents
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    
+                    // Show the selected tab content
+                    document.getElementById(`${tabId}-view`).classList.remove('hidden');
+                    
+                    // Initialize charts if weekly view is selected
+                    if (tabId === 'weekly') {
+                        initializeWeeklyCharts();
+                    }
+                });
+            });
+            
+            // Food search
+            searchBtn.addEventListener('click', () => {
+                const query = foodSearch.value.trim().toLowerCase();
+                if (query.length < 2) return;
+                
+                const results = foodDatabase.filter(food => 
+                    food.name.toLowerCase().includes(query)
+                );
+                
+                displaySearchResults(results);
+            });
+            
+            foodSearch.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    searchBtn.click();
+                }
+                
+                const query = foodSearch.value.trim().toLowerCase();
+                if (query.length < 2) {
+                    universalSearchResults.classList.add('hidden');
+                    return;
+                }
+                
+                const results = foodDatabase.filter(food => 
+                    food.name.toLowerCase().includes(query)
+                );
+                
+                displaySearchResults(results);
+            });
+            
+            // Quick add buttons
+            quickAddBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const foodName = btn.getAttribute('data-food');
+                    const food = foodDatabase.find(f => f.name === foodName);
+                    
+                    if (food) {
+                        // Ask user which meal to add to
+                        const meal = prompt('Which meal would you like to add this to? (breakfast/lunch/dinner/snacks)').toLowerCase();
+                        if (['breakfast', 'lunch', 'dinner', 'snacks'].includes(meal)) {
+                            openAddFoodModal(meal, food);
+                        }
+                    }
+                });
+            });
+            
+            // Add food buttons
+            addFoodBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const meal = btn.getAttribute('data-meal');
+                    openAddFoodModal(meal);
+                });
+            });
+            
+            // Close food modal
+            closeFoodModal.addEventListener('click', closeAddFoodModal);
+            cancelFood.addEventListener('click', closeAddFoodModal);
+            
+            // Save food
+            saveFood.addEventListener('click', () => {
+                const foodName = document.getElementById('food-name').value.trim();
+                const servingSize = parseFloat(document.getElementById('serving-size').value);
+                const servingUnit = document.getElementById('serving-unit').value;
+                const calories = parseInt(document.getElementById('food-calories').value);
+                const carbs = parseFloat(document.getElementById('food-carbs').value) || 0;
+                const protein = parseFloat(document.getElementById('food-protein').value) || 0;
+                const fat = parseFloat(document.getElementById('food-fat').value) || 0;
+                const sugar = parseFloat(document.getElementById('food-sugar').value) || 0;
+                const fiber = parseFloat(document.getElementById('food-fiber').value) || 0;
+                const sodium = parseInt(document.getElementById('food-sodium').value) || 0;
+                
+                // Input validation
+                if (!foodName) {
+                    alert('Please enter a food name.');
+                    return;
+                }
+                
+                if (isNaN(servingSize) || servingSize <= 0 || servingSize > 100) {
+                    alert('Please enter a valid serving size (0.1 - 100).');
+                    return;
+                }
+                
+                if (isNaN(calories) || calories <= 0 || calories > 5000) {
+                    alert('Please enter valid calories (1 - 5000).');
+                    return;
+                }
+                
+                if (carbs < 0 || protein < 0 || fat < 0 || sugar < 0 || fiber < 0 || sodium < 0) {
+                    alert('Nutrition values cannot be negative.');
+                    return;
+                }
+                
+                // Calculate nutrition based on serving size
+                const food = {
+                    name: foodName,
+                    servingSize,
+                    servingUnit,
+                    calories: Math.round(calories * servingSize),
+                    carbs: Math.round((carbs * servingSize) * 10) / 10,
+                    protein: Math.round((protein * servingSize) * 10) / 10,
+                    fat: Math.round((fat * servingSize) * 10) / 10,
+                    sugar: Math.round((sugar * servingSize) * 10) / 10,
+                    fiber: Math.round((fiber * servingSize) * 10) / 10,
+                    sodium: Math.round(sodium * servingSize)
+                };
+                
+                addFoodToMeal(currentMeal, food);
+                closeAddFoodModal();
+                updateNutritionSummary();
+                saveUserData(); // Save to localStorage
+                
+                // Update chatbot context
+                updateContextOnAction('food-added', {
+                    totalCalories: calculateTotalCalories(),
+                    mealsAdded: userContext.mealsAdded + 1
+                });
+            });
+            
+            // Add exercise button
+            addExerciseBtn.addEventListener('click', () => {
+                openAddExerciseModal();
+            });
+            
+            // Close exercise modal
+            closeExerciseModal.addEventListener('click', closeAddExerciseModal);
+            cancelExercise.addEventListener('click', closeAddExerciseModal);
+            
+            // Save exercise
+            saveExercise.addEventListener('click', () => {
+                const exerciseType = document.getElementById('exercise-type').value;
+                const duration = parseInt(document.getElementById('exercise-duration').value);
+                const intensity = document.getElementById('exercise-intensity').value;
+                let calories = parseInt(document.getElementById('exercise-calories').value);
+                
+                if (!exerciseType) {
+                    alert('Please select an exercise type.');
+                    return;
+                }
+                
+                if (isNaN(duration) || duration <= 0 || duration > 480) {
+                    alert('Please enter a valid duration (1 - 480 minutes).');
+                    return;
+                }
+                
+                // Calculate calories if not provided
+                if (isNaN(calories) || calories <= 0) {
+                    // Simple estimation based on exercise type, duration, and intensity
+                    const intensityFactor = {
+                        low: 3,
+                        moderate: 5,
+                        high: 8,
+                        very_high: 10
+                    };
+                    
+                    calories = Math.round(duration * intensityFactor[intensity]);
+                }
+                
+                userData.caloriesBurned += calories;
+                closeAddExerciseModal();
+                updateNutritionSummary();
+                saveUserData(); // Save after adding exercise
+                
+                // Update chatbot context
+                updateContextOnAction('exercise-added', {
+                    exerciseAdded: true,
+                    caloriesBurned: userData.caloriesBurned
+                });
+            });
+            
+            // Adjust goal button
+            adjustGoalBtn.addEventListener('click', () => {
+                openAdjustGoalModal();
+            });
+            
+            // Close goal modal
+            closeGoalModal.addEventListener('click', closeAdjustGoalModal);
+            cancelGoal.addEventListener('click', closeAdjustGoalModal);
+            
+            // Save goal
+            saveGoal.addEventListener('click', () => {
+                const calorieGoal = parseInt(document.getElementById('calorie-goal').value);
+                const carbsPercent = parseInt(document.getElementById('carbs-percent').value);
+                const proteinPercent = parseInt(document.getElementById('protein-percent').value);
+                const fatPercent = parseInt(document.getElementById('fat-percent').value);
+                
+                // Input validation
+                if (isNaN(calorieGoal) || calorieGoal < 1000 || calorieGoal > 5000) {
+                    alert('Please enter a valid calorie goal (1000 - 5000).');
+                    return;
+                }
+                
+                if (carbsPercent + proteinPercent + fatPercent !== 100) {
+                    alert('Macro percentages must add up to 100%.');
+                    return;
+                }
+                
+                userData.calorieGoal = calorieGoal;
+                userData.carbsGoal = Math.round((calorieGoal * carbsPercent / 100) / 4); // 4 calories per gram of carbs
+                userData.proteinGoal = Math.round((calorieGoal * proteinPercent / 100) / 4); // 4 calories per gram of protein
+                userData.fatGoal = Math.round((calorieGoal * fatPercent / 100) / 9); // 9 calories per gram of fat
+                
+                document.getElementById('calories-goal').textContent = formatNumber(calorieGoal);
+                document.getElementById('carbs-goal').textContent = userData.carbsGoal;
+                document.getElementById('protein-goal').textContent = userData.proteinGoal;
+                document.getElementById('fat-goal').textContent = userData.fatGoal;
+                
+                closeAdjustGoalModal();
+                updateNutritionSummary();
+                saveUserData(); // Save after adjusting goals
+                
+                // Update chatbot context
+                updateContextOnAction('goals-updated', {
+                    goalsSet: true,
+                    calorieGoal: userData.calorieGoal
+                });
+            });
+            
+            // Update macro total in goal modal
+            document.getElementById('carbs-percent').addEventListener('input', updateMacroTotal);
+            document.getElementById('protein-percent').addEventListener('input', updateMacroTotal);
+            document.getElementById('fat-percent').addEventListener('input', updateMacroTotal);
+            
+            // Date navigation
+            prevDateBtn.addEventListener('click', () => {
+                userData.currentDate.setDate(userData.currentDate.getDate() - 1);
+                updateDateDisplay();
+                loadUserDataForDate(); // Load data for specific date instead of resetting
+            });
+            
+            nextDateBtn.addEventListener('click', () => {
+                userData.currentDate.setDate(userData.currentDate.getDate() + 1);
+                updateDateDisplay();
+                loadUserDataForDate(); // Load data for specific date instead of resetting
+            });
+            
+            todayBtn.addEventListener('click', () => {
+                userData.currentDate = new Date();
+                updateDateDisplay();
+                loadUserDataForDate(); // Load data for specific date instead of resetting
+            });
+            
+            // Exercise type change - update calories estimate
+            document.getElementById('exercise-type').addEventListener('change', updateCaloriesEstimate);
+            document.getElementById('exercise-duration').addEventListener('input', updateCaloriesEstimate);
+            document.getElementById('exercise-intensity').addEventListener('change', updateCaloriesEstimate);
+            
+            // Initialize
+            loadUserData(); // Load saved data on startup
+            updateDateDisplay();
+            updateNutritionSummary();
+            
+            // Functions
+            function displaySearchResults(results) {
+                if (results.length === 0) {
+                    searchResults.innerHTML = '<div class="p-4 text-gray-500 text-center">No results found</div>';
+                    searchResults.classList.remove('hidden');
+                    return;
+                }
+                
+                let html = '';
+                results.forEach(food => {
+                    html += `
+                        <div class="search-result-item p-3 border-b border-gray-100 hover:bg-gray-50" data-food='${JSON.stringify(food)}'>
+                            <div class="font-medium text-gray-800">${food.name}</div>
+                            <div class="flex justify-between text-sm text-gray-500">
+                                <span>${food.serving}</span>
+                                <span>${food.calories} cal</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                searchResults.innerHTML = html;
+                searchResults.classList.remove('hidden');
+                
+                // Add click event to search results
+                document.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const food = JSON.parse(item.getAttribute('data-food'));
+                        // Ask user which meal to add to
+                        const meal = prompt('Which meal would you like to add this to? (breakfast/lunch/dinner/snacks)').toLowerCase();
+                        if (['breakfast', 'lunch', 'dinner', 'snacks'].includes(meal)) {
+                            openAddFoodModal(meal, food);
+                            universalSearchResults.classList.add('hidden');
+                            foodSearch.value = '';
+                        }
+                    });
+                });
+            }
+            
+            function openAddFoodModal(meal, food = null) {
+                currentMeal = meal;
+                modalTitle.textContent = `Add Food to ${capitalizeFirstLetter(meal)}`;
+                
+                // Reset form
+                document.getElementById('food-name').value = '';
+                document.getElementById('serving-size').value = '1';
+                document.getElementById('serving-unit').value = 'serving';
+                document.getElementById('food-calories').value = '';
+                document.getElementById('food-carbs').value = '';
+                document.getElementById('food-protein').value = '';
+                document.getElementById('food-fat').value = '';
+                document.getElementById('food-sugar').value = '';
+                document.getElementById('food-fiber').value = '';
+                document.getElementById('food-sodium').value = '';
+                
+                // Fill form if food is provided
+                if (food) {
+                    document.getElementById('food-name').value = food.name;
+                    document.getElementById('food-calories').value = food.calories;
+                    document.getElementById('food-carbs').value = food.carbs;
+                    document.getElementById('food-protein').value = food.protein;
+                    document.getElementById('food-fat').value = food.fat;
+                    document.getElementById('food-sugar').value = food.sugar;
+                    document.getElementById('food-fiber').value = food.fiber;
+                    document.getElementById('food-sodium').value = food.sodium;
+                }
+                
+                addFoodModal.classList.remove('hidden');
+            }
+            
+            function closeAddFoodModal() {
+                addFoodModal.classList.add('hidden');
+            }
+            
+            function openAddExerciseModal() {
+                // Reset form
+                document.getElementById('exercise-type').value = '';
+                document.getElementById('exercise-duration').value = '30';
+                document.getElementById('exercise-intensity').value = 'moderate';
+                document.getElementById('exercise-calories').value = '';
+                
+                addExerciseModal.classList.remove('hidden');
+            }
+            
+            function closeAddExerciseModal() {
+                addExerciseModal.classList.add('hidden');
+            }
+            
+            function openAdjustGoalModal() {
+                // Fill form with current values
+                document.getElementById('calorie-goal').value = userData.calorieGoal;
+                
+                // Calculate current percentages
+                const totalCalories = userData.calorieGoal;
+                const carbsPercent = Math.round((userData.carbsGoal * 4 / totalCalories) * 100);
+                const proteinPercent = Math.round((userData.proteinGoal * 4 / totalCalories) * 100);
+                const fatPercent = Math.round((userData.fatGoal * 9 / totalCalories) * 100);
+                
+                document.getElementById('carbs-percent').value = carbsPercent;
+                document.getElementById('protein-percent').value = proteinPercent;
+                document.getElementById('fat-percent').value = fatPercent;
+                
+                updateMacroTotal();
+                
+                adjustGoalModal.classList.remove('hidden');
+            }
+            
+            function closeAdjustGoalModal() {
+                adjustGoalModal.classList.add('hidden');
+            }
+            
+            function updateMacroTotal() {
+                const carbsPercent = parseInt(document.getElementById('carbs-percent').value) || 0;
+                const proteinPercent = parseInt(document.getElementById('protein-percent').value) || 0;
+                const fatPercent = parseInt(document.getElementById('fat-percent').value) || 0;
+                
+                const total = carbsPercent + proteinPercent + fatPercent;
+                document.getElementById('macro-total').textContent = total;
+                
+                if (total !== 100) {
+                    document.getElementById('macro-total').classList.add('text-red-500');
+                } else {
+                    document.getElementById('macro-total').classList.remove('text-red-500');
+                }
+            }
+            
+            function addFoodToMeal(meal, food) {
+                // Add unique ID to food
+                food.id = Date.now();
+                
+                // Add food to meal
+                userData.meals[meal].push(food);
+                
+                // Update meal display
+                updateMealDisplay(meal);
+                
+                // Save data after adding food
+                saveUserData();
+            }
+            
+            function updateMealDisplay(meal) {
+                const mealItems = document.getElementById(`${meal}-items`);
+                const mealEmpty = document.getElementById(`${meal}-empty`);
+                const mealCalories = document.getElementById(`${meal}-calories`);
+                
+                if (userData.meals[meal].length === 0) {
+                    mealEmpty.classList.remove('hidden');
+                    mealCalories.textContent = '0 cal';
+                    mealItems.innerHTML = '';
+                    return;
+                }
+                
+                mealEmpty.classList.add('hidden');
+                
+                let totalCalories = 0;
+                let html = '';
+                
+                userData.meals[meal].forEach(food => {
+                    totalCalories += food.calories;
+                    
+                    html += `
+                        <div class="food-item fade-in flex justify-between items-center p-3 border-b border-gray-100">
+                            <div>
+                                <div class="font-medium text-gray-800">${food.name}</div>
+                                <div class="text-sm text-gray-500">${food.servingSize} ${food.servingUnit}</div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="text-sm font-medium text-gray-700 mr-4">${food.calories} cal</div>
+                                <button class="delete-food text-red-500 hover:text-red-700" data-meal="${meal}" data-id="${food.id}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                mealItems.innerHTML = html;
+                mealCalories.textContent = `${formatNumber(totalCalories)} cal`;
+                
+                // Add delete event listeners
+                document.querySelectorAll('.delete-food').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const meal = btn.getAttribute('data-meal');
+                        const id = parseInt(btn.getAttribute('data-id'));
+                        const foodName = userData.meals[meal].find(food => food.id === id)?.name || 'this food';
+                        
+                        // Confirmation dialog
+                        if (confirm(`Are you sure you want to remove "${foodName}" from ${capitalizeFirstLetter(meal)}?`)) {
+                            // Remove food from meal
+                            userData.meals[meal] = userData.meals[meal].filter(food => food.id !== id);
+                            
+                            // Update meal display
+                            updateMealDisplay(meal);
+                            
+                            // Update nutrition summary
+                            updateNutritionSummary();
+                            
+                            // Save data after removing food
+                            saveUserData();
+                        }
+                    });
+                });
+            }
+            
+            function updateNutritionSummary() {
+                // Calculate totals
+                let totalCalories = 0;
+                let totalCarbs = 0;
+                let totalProtein = 0;
+                let totalFat = 0;
+                let totalSugar = 0;
+                let totalFiber = 0;
+                let totalSodium = 0;
+                
+                Object.values(userData.meals).forEach(foods => {
+                    foods.forEach(food => {
+                        totalCalories += food.calories;
+                        totalCarbs += food.carbs;
+                        totalProtein += food.protein;
+                        totalFat += food.fat;
+                        totalSugar += food.sugar || 0;
+                        totalFiber += food.fiber || 0;
+                        totalSodium += food.sodium || 0;
+                    });
+                });
+                
+                // Update calorie summary
+                document.getElementById('calories-consumed').textContent = formatNumber(totalCalories);
+                document.getElementById('calories-burned').textContent = formatNumber(userData.caloriesBurned);
+                
+                const caloriesRemaining = userData.calorieGoal - totalCalories + userData.caloriesBurned;
+                document.getElementById('calories-remaining').textContent = formatNumber(caloriesRemaining);
+                
+                // Update calorie progress ring
+                const caloriePercentage = Math.min(Math.round((totalCalories / userData.calorieGoal) * 100), 100);
+                document.getElementById('calorie-percentage').textContent = `${caloriePercentage}%`;
+                
+                const circumference = 2 * Math.PI * 40;
+                const offset = circumference - (caloriePercentage / 100) * circumference;
+                document.getElementById('calorie-progress').style.strokeDasharray = `${circumference} ${circumference}`;
+                document.getElementById('calorie-progress').style.strokeDashoffset = offset;
+                
+                // Update macronutrients
+                document.getElementById('carbs-consumed').textContent = Math.round(totalCarbs);
+                document.getElementById('protein-consumed').textContent = Math.round(totalProtein);
+                document.getElementById('fat-consumed').textContent = Math.round(totalFat);
+                
+                // Update macro progress bars
+                const carbsPercentage = Math.min(Math.round((totalCarbs / userData.carbsGoal) * 100), 100);
+                const proteinPercentage = Math.min(Math.round((totalProtein / userData.proteinGoal) * 100), 100);
+                const fatPercentage = Math.min(Math.round((totalFat / userData.fatGoal) * 100), 100);
+                
+                document.getElementById('carbs-progress').style.width = `${carbsPercentage}%`;
+                document.getElementById('protein-progress').style.width = `${proteinPercentage}%`;
+                document.getElementById('fat-progress').style.width = `${fatPercentage}%`;
+                
+                // Update macro ratio
+                const totalMacroCalories = (totalCarbs * 4) + (totalProtein * 4) + (totalFat * 9);
+                
+                if (totalMacroCalories > 0) {
+                    const carbsRatio = Math.round((totalCarbs * 4 / totalMacroCalories) * 100);
+                    const proteinRatio = Math.round((totalProtein * 4 / totalMacroCalories) * 100);
+                    const fatRatio = 100 - carbsRatio - proteinRatio;
+                    
+                    document.getElementById('carbs-ratio').style.width = `${carbsRatio}%`;
+                    document.getElementById('protein-ratio').style.width = `${proteinRatio}%`;
+                    document.getElementById('fat-ratio').style.width = `${fatRatio}%`;
+                    
+                    document.getElementById('carbs-ratio-text').textContent = `${carbsRatio}%`;
+                    document.getElementById('protein-ratio-text').textContent = `${proteinRatio}%`;
+                    document.getElementById('fat-ratio-text').textContent = `${fatRatio}%`;
+                }
+                
+                // Update nutrition insights
+                document.getElementById('sugar-consumed').textContent = `${Math.round(totalSugar)}g`;
+                document.getElementById('fiber-consumed').textContent = `${Math.round(totalFiber)}g`;
+                document.getElementById('sodium-consumed').textContent = `${formatNumber(totalSodium)}mg`;
+                document.getElementById('water-consumed').textContent = `0ml`;
+                
+                // Update nutrition tip based on data
+                updateNutritionTip(totalCarbs, totalProtein, totalFat, totalFiber, totalSugar);
+            }
+            
+            function updateNutritionTip(carbs, protein, fat, fiber, sugar) {
+                const tips = [
+                    "Try to include more fiber-rich foods in your diet for better digestion.",
+                    "Drinking water before meals can help control portion sizes.",
+                    "Aim for a balanced plate with 1/2 vegetables, 1/4 protein, and 1/4 whole grains.",
+                    "Include a source of protein with each meal to help maintain muscle mass.",
+                    "Choose whole foods over processed foods whenever possible."
+                ];
+                
+                // Personalized tips based on data
+                if (fiber < 15) {
+                    document.getElementById('nutrition-tip').textContent = "Your fiber intake is low. Try adding more fruits, vegetables, and whole grains to your diet.";
+                } else if (sugar > 50) {
+                    document.getElementById('nutrition-tip').textContent = "Your sugar intake is high. Consider reducing added sugars in your diet.";
+                } else if (protein < 60) {
+                    document.getElementById('nutrition-tip').textContent = "Your protein intake is below target. Consider adding more lean protein sources to your meals.";
+                } else {
+                    // Random tip
+                    const randomTip = tips[Math.floor(Math.random() * tips.length)];
+                    document.getElementById('nutrition-tip').textContent = randomTip;
+                }
+            }
+            
+            function updateDateDisplay() {
+                const options = { weekday: 'long', month: 'short', day: 'numeric' };
+                const dateString = userData.currentDate.toLocaleDateString('en-US', options);
+                
+                const today = new Date();
+                if (isSameDay(userData.currentDate, today)) {
+                    currentDateDisplay.textContent = 'Today';
+                } else {
+                    currentDateDisplay.textContent = dateString;
+                }
+            }
+            
+            function resetDailyData() {
+                userData.meals = {
+                    breakfast: [],
+                    lunch: [],
+                    dinner: [],
+                    snacks: []
+                };
+                userData.caloriesBurned = 0;
+                
+                // Update UI
+                updateMealDisplay('breakfast');
+                updateMealDisplay('lunch');
+                updateMealDisplay('dinner');
+                updateMealDisplay('snacks');
+                updateNutritionSummary();
+            }
+            
+            function updateCaloriesEstimate() {
+                const exerciseType = document.getElementById('exercise-type').value;
+                const duration = parseInt(document.getElementById('exercise-duration').value) || 0;
+                const intensity = document.getElementById('exercise-intensity').value;
+                
+                if (!exerciseType || duration <= 0) {
+                    document.getElementById('exercise-calories').value = '';
+                    return;
+                }
+                
+                // Simple estimation based on exercise type, duration, and intensity
+                const intensityFactor = {
+                    low: 3,
+                    moderate: 5,
+                    high: 8,
+                    very_high: 10
+                };
+                
+                // Exercise-specific factors
+                const exerciseFactor = {
+                    running: 1.2,
+                    walking: 0.7,
+                    cycling: 1.0,
+                    swimming: 1.1,
+                    weight_training: 0.8,
+                    yoga: 0.6,
+                    hiit: 1.3,
+                    other: 1.0
+                };
+                
+                const calories = Math.round(duration * intensityFactor[intensity] * exerciseFactor[exerciseType]);
+                document.getElementById('exercise-calories').value = calories;
+            }
+            
+            function initializeWeeklyCharts() {
+                // Weekly calories chart
+                const weeklyCaloriesCtx = document.getElementById('weekly-calories-chart').getContext('2d');
+                if (weeklyCaloriesChart) {
+                    weeklyCaloriesChart.destroy();
+                }
+                
+                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const caloriesData = userData.weeklyData.map(day => day.calories);
+                const goalLine = Array(7).fill(userData.calorieGoal);
+                
+                weeklyCaloriesChart = new Chart(weeklyCaloriesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: days,
+                        datasets: [
+                            {
+                                label: 'Calories',
+                                data: caloriesData,
+                                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Goal',
+                                data: goalLine,
+                                type: 'line',
+                                borderColor: 'rgba(239, 68, 68, 0.7)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                fill: false,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    display: true,
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Weekly macros chart
+                const weeklyMacrosCtx = document.getElementById('weekly-macros-chart').getContext('2d');
+                if (weeklyMacrosChart) {
+                    weeklyMacrosChart.destroy();
+                }
+                
+                const carbsData = userData.weeklyData.map(day => day.carbs);
+                const proteinData = userData.weeklyData.map(day => day.protein);
+                const fatData = userData.weeklyData.map(day => day.fat);
+                
+                weeklyMacrosChart = new Chart(weeklyMacrosCtx, {
+                    type: 'line',
+                    data: {
+                        labels: days,
+                        datasets: [
+                            {
+                                label: 'Carbs',
+                                data: carbsData,
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Protein',
+                                data: proteinData,
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Fat',
+                                data: fatData,
+                                borderColor: 'rgba(245, 158, 11, 1)',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 30
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    display: true,
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+                
+                // Calorie balance chart
+                const calorieBalanceCtx = document.getElementById('calorie-balance-chart').getContext('2d');
+                if (calorieBalanceChart) {
+                    calorieBalanceChart.destroy();
+                }
+                
+                const consumedData = userData.weeklyData.map(day => day.calories);
+                const burnedData = userData.weeklyData.map(day => day.burned);
+                
+                calorieBalanceChart = new Chart(calorieBalanceCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: days,
+                        datasets: [
+                            {
+                                label: 'Consumed',
+                                data: consumedData,
+                                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Burned',
+                                data: burnedData,
+                                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                                borderColor: 'rgba(239, 68, 68, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 30
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                stacked: false,
+                                grid: {
+                                    display: true,
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                stacked: false,
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+                
+                // Nutrition quality chart
+                const nutritionQualityCtx = document.getElementById('nutrition-quality-chart').getContext('2d');
+                if (nutritionQualityChart) {
+                    nutritionQualityChart.destroy();
+                }
+                
+                nutritionQualityChart = new Chart(nutritionQualityCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Protein', 'Fiber', 'Vitamins', 'Minerals', 'Healthy Fats', 'Low Sugar'],
+                        datasets: [{
+                            label: 'This Week',
+                            data: [85, 70, 65, 75, 80, 60],
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(59, 130, 246, 1)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Update weekly summary data
+                updateWeeklySummary();
+                
+                // Populate weekly breakdown table
+                populateWeeklyBreakdownTable();
+            }
+            
+            function updateWeeklySummary() {
+                const totalCalories = userData.weeklyData.reduce((sum, day) => sum + day.calories, 0);
+                const avgCalories = Math.round(totalCalories / 7);
+                const highestCalories = Math.max(...userData.weeklyData.map(day => day.calories));
+                const highestDay = userData.weeklyData.findIndex(day => day.calories === highestCalories);
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                
+                document.getElementById('avg-daily-calories').textContent = formatNumber(avgCalories);
+                document.getElementById('total-weekly-calories').textContent = formatNumber(totalCalories);
+                document.getElementById('highest-day').textContent = `${days[highestDay]} (${formatNumber(highestCalories)})`;
+                document.getElementById('weekly-goal').textContent = formatNumber(userData.calorieGoal * 7);
+                
+                // Calculate average macros
+                const totalCarbs = userData.weeklyData.reduce((sum, day) => sum + day.carbs, 0);
+                const totalProtein = userData.weeklyData.reduce((sum, day) => sum + day.protein, 0);
+                const totalFat = userData.weeklyData.reduce((sum, day) => sum + day.fat, 0);
+                
+                const avgCarbs = Math.round(totalCarbs / 7);
+                const avgProtein = Math.round(totalProtein / 7);
+                const avgFat = Math.round(totalFat / 7);
+                
+                document.getElementById('avg-carbs').textContent = `${avgCarbs}g`;
+                document.getElementById('avg-protein').textContent = `${avgProtein}g`;
+                document.getElementById('avg-fat').textContent = `${avgFat}g`;
+            }
+            
+            function populateWeeklyBreakdownTable() {
+                const tableBody = document.getElementById('weekly-breakdown-table');
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                
+                let html = '';
+                
+                userData.weeklyData.forEach((day, index) => {
+                    const calorieStatus = day.calories < userData.calorieGoal ? 'Under' : day.calories > userData.calorieGoal ? 'Over' : 'On Target';
+                    const statusClass = calorieStatus === 'Under' ? 'text-blue-600' : calorieStatus === 'Over' ? 'text-red-600' : 'text-green-600';
+                    
+                    html += `
+                        <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${days[index]}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${formatNumber(day.calories)}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${day.carbs}g</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${day.protein}g</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">${day.fat}g</td>
+                            <td class="px-4 py-3 text-sm font-medium ${statusClass}">${calorieStatus}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableBody.innerHTML = html;
+            }
+            
+            function generateSampleWeeklyData() {
+                const data = [];
+                
+                for (let i = 0; i < 7; i++) {
+                    // Generate random data around the goal
+                    const variance = Math.random() * 400 - 200; // -200 to +200
+                    const calories = Math.round(userData.calorieGoal + variance);
+                    
+                    // Generate macros that roughly match the goal percentages
+                    const carbsPercent = 0.5 + (Math.random() * 0.1 - 0.05); // 45-55%
+                    const proteinPercent = 0.25 + (Math.random() * 0.1 - 0.05); // 20-30%
+                    const fatPercent = 1 - carbsPercent - proteinPercent; // Remainder
+                    
+                    const carbs = Math.round((calories * carbsPercent) / 4);
+                    const protein = Math.round((calories * proteinPercent) / 4);
+                    const fat = Math.round((calories * fatPercent) / 9);
+                    
+                    // Generate random burned calories
+                    const burned = Math.round(100 + Math.random() * 300);
+                    
+                    data.push({
+                        calories,
+                        carbs,
+                        protein,
+                        fat,
+                        burned
+                    });
+                }
+                
+                return data;
+            }
+            
+            // Helper functions
+            function formatNumber(num) {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+            
+            function capitalizeFirstLetter(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+            
+            function isSameDay(date1, date2) {
+                return date1.getFullYear() === date2.getFullYear() &&
+                       date1.getMonth() === date2.getMonth() &&
+                       date1.getDate() === date2.getDate();
+            }
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#search-results') && !e.target.closest('#food-search') && !e.target.closest('#search-btn')) {
+                    searchResults.classList.add('hidden');
+                }
+            });
+            
+            // Mobile menu functionality
+            const mobileMenuButton = document.querySelector('.mobile-menu-button');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+            
+            // Chatbot functionality
+            const chatbotToggle = document.getElementById('chatbot-toggle');
+            const chatbotInterface = document.getElementById('chatbot-interface');
+            const chatbotClose = document.getElementById('chatbot-close');
+            const chatbotInput = document.getElementById('chatbot-input');
+            const chatbotSend = document.getElementById('chatbot-send');
+            const chatbotMessages = document.getElementById('chatbot-messages');
+            
+            // User context tracking
+            let userContext = {
+                currentPage: 'food-tracker',
+                totalCalories: 0,
+                mealsAdded: 0,
+                goalsSet: false,
+                exerciseAdded: false,
+                lastAction: 'page-load'
+            };
+            
+            // Update context based on user actions
+            function updateUserContext(action, data = {}) {
+                userContext.lastAction = action;
+                Object.assign(userContext, data);
+            }
+            
+            // Toggle chatbot
+            chatbotToggle.addEventListener('click', () => {
+                chatbotInterface.classList.toggle('hidden');
+                if (!chatbotInterface.classList.contains('hidden')) {
+                    chatbotInput.focus();
+                }
+            });
+            
+            // Close chatbot
+            chatbotClose.addEventListener('click', () => {
+                chatbotInterface.classList.add('hidden');
+            });
+            
+            // Send message
+            function sendMessage() {
+                const message = chatbotInput.value.trim();
+                if (!message) return;
+                
+                // Add user message
+                addMessage(message, 'user');
+                chatbotInput.value = '';
+                
+                // Generate contextual response
+                const response = generateContextualResponse(message);
+                setTimeout(() => {
+                    addMessage(response, 'bot');
+                }, 500);
+            }
+            
+            chatbotSend.addEventListener('click', sendMessage);
+            chatbotInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Add message to chat
+            function addMessage(message, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'flex items-start';
+                
+                if (sender === 'user') {
+                    messageDiv.innerHTML = `
+                        <div class="ml-auto bg-blue-600 text-white rounded-lg p-3 max-w-xs">
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="bg-blue-100 text-blue-800 rounded-lg p-3 max-w-xs">
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    `;
+                }
+                
+                chatbotMessages.appendChild(messageDiv);
+                chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            }
+            
+            // Generate contextual responses
+            function generateContextualResponse(message) {
+                const lowerMessage = message.toLowerCase();
+                
+                // Food tracking related responses
+                if (lowerMessage.includes('add food') || lowerMessage.includes('add meal')) {
+                    return "To add food, you can either search for foods using the search bar, use the quick add buttons, or click 'Add Food' under any meal section. What type of food would you like to add?";
+                }
+                
+                if (lowerMessage.includes('calorie') || lowerMessage.includes('calories')) {
+                    const remaining = userData.calorieGoal - userContext.totalCalories + userData.caloriesBurned;
+                    return `You've consumed ${userContext.totalCalories} calories today. Your goal is ${userData.calorieGoal} calories, and you have ${remaining} calories remaining. Would you like help planning your remaining meals?`;
+                }
+                
+                if (lowerMessage.includes('goal') || lowerMessage.includes('target')) {
+                    return "You can adjust your nutrition goals by clicking the 'Adjust Goal' button in the Calorie Summary section. This lets you set your daily calorie target and macro distribution.";
+                }
+                
+                if (lowerMessage.includes('exercise') || lowerMessage.includes('workout')) {
+                    return "To add exercise, click the 'Add Exercise' button in the Calorie Summary section. You can track different types of exercise and see how many calories you've burned.";
+                }
+                
+                if (lowerMessage.includes('macro') || lowerMessage.includes('protein') || lowerMessage.includes('carbs') || lowerMessage.includes('fat')) {
+                    return "I can see your macro breakdown in the Macronutrients section. You're tracking carbs, protein, and fat. Would you like tips on balancing your macros or help reaching your targets?";
+                }
+                
+                if (lowerMessage.includes('help') || lowerMessage.includes('how to')) {
+                    return "I can help you with: adding foods, tracking calories, setting goals, adding exercise, understanding macros, and nutrition tips. What would you like to know more about?";
+                }
+                
+                if (lowerMessage.includes('tip') || lowerMessage.includes('advice')) {
+                    const tips = [
+                        "Try to include protein with every meal to help maintain muscle mass.",
+                        "Drinking water before meals can help control portion sizes.",
+                        "Aim for a balanced plate with 1/2 vegetables, 1/4 protein, and 1/4 whole grains.",
+                        "Track your meals consistently to get better insights into your eating patterns.",
+                        "Don't forget to log your exercise to see your complete calorie balance."
+                    ];
+                    return tips[Math.floor(Math.random() * tips.length)];
+                }
+                
+                // Default response
+                return "I'm here to help you with your nutrition tracking! I can assist with adding foods, understanding your calorie balance, setting goals, and providing nutrition tips. What would you like to know?";
+            }
+            
+            // Update context when user performs actions
+            function updateContextOnAction(action, data = {}) {
+                updateUserContext(action, data);
+            }
+            
+            // Calculate total calories
+            function calculateTotalCalories() {
+                let total = 0;
+                Object.values(userData.meals).forEach(foods => {
+                    foods.forEach(food => {
+                        total += food.calories;
+                    });
+                });
+                return total;
+            }
+            
+            // Universal Search Functionality
+            const universalSearch = document.getElementById('universal-search');
+            const universalSearchResults = document.getElementById('search-results');
+            
+            // Search database - all features across HealthNet
+            const searchDatabase = [
+                {
+                    title: "Dashboard",
+                    description: "View health metrics, risk assessments, and AI insights",
+                    category: "Navigation",
+                    url: "dashboard.html",
+                    keywords: ["dashboard", "health metrics", "risk assessment", "ai insights", "vitals", "heart rate", "blood pressure", "glucose", "activity", "steps", "calories", "upload report", "medical report"]
+                },
+                {
+                    title: "Health Questionnaire",
+                    description: "Complete comprehensive health assessment",
+                    category: "Assessment",
+                    url: "questionnaire.html",
+                    keywords: ["questionnaire", "health assessment", "personal info", "lifestyle", "medical history", "vitals", "mental health", "diet", "nutrition", "social support", "menstrual health", "device tracking"]
+                },
+                {
+                    title: "Food Tracker",
+                    description: "Track nutrition, calories, and meal planning",
+                    category: "Nutrition",
+                    url: "food tracker.html",
+                    keywords: ["food tracker", "nutrition", "calories", "meal planning", "add food", "track meals", "macro tracking", "protein", "carbs", "fat", "exercise", "calorie goals", "weight management"]
+                },
+                {
+                    title: "Add Food",
+                    description: "Log meals and track nutrition intake",
+                    category: "Food Tracker",
+                    url: "food tracker.html#add-food",
+                    keywords: ["add food", "log meal", "track nutrition", "calorie counting", "meal logging", "food database", "quick add", "search food"]
+                },
+                {
+                    title: "Set Nutrition Goals",
+                    description: "Configure daily calorie and macro targets",
+                    category: "Food Tracker",
+                    url: "food tracker.html#goals",
+                    keywords: ["nutrition goals", "calorie goals", "macro goals", "protein goals", "carb goals", "fat goals", "weight goals", "fitness goals"]
+                },
+                {
+                    title: "Add Exercise",
+                    description: "Log workouts and track calories burned",
+                    category: "Food Tracker",
+                    url: "food tracker.html#exercise",
+                    keywords: ["add exercise", "workout", "calories burned", "fitness tracking", "exercise log", "activity tracking", "gym", "running", "walking"]
+                },
+                {
+                    title: "Upload Medical Report",
+                    description: "Upload and analyze medical reports with AI",
+                    category: "Dashboard",
+                    url: "dashboard.html#upload",
+                    keywords: ["upload report", "medical report", "blood test", "lab results", "ai analysis", "health data", "medical documents", "pdf upload"]
+                },
+                {
+                    title: "Personal Information",
+                    description: "Update personal details and contact information",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#personal",
+                    keywords: ["personal info", "contact details", "name", "age", "gender", "address", "phone", "email", "basic information"]
+                },
+                {
+                    title: "Lifestyle Assessment",
+                    description: "Complete lifestyle and daily routine questionnaire",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#lifestyle",
+                    keywords: ["lifestyle", "daily routine", "exercise routine", "sleep patterns", "stress levels", "work habits", "activity level", "daily habits"]
+                },
+                {
+                    title: "Medical History",
+                    description: "Document medical history and family health",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#medical",
+                    keywords: ["medical history", "family history", "past illnesses", "surgeries", "medications", "conditions", "allergies", "health history"]
+                },
+                {
+                    title: "Vital Signs",
+                    description: "Record current health measurements",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#vitals",
+                    keywords: ["vital signs", "blood pressure", "heart rate", "weight", "height", "bmi", "measurements", "current health", "health metrics"]
+                },
+                {
+                    title: "Mental Health Assessment",
+                    description: "Evaluate emotional well-being and mental health",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#mental",
+                    keywords: ["mental health", "emotional well-being", "stress", "anxiety", "depression", "mood", "mental state", "psychological health"]
+                },
+                {
+                    title: "Diet & Nutrition Assessment",
+                    description: "Assess eating habits and dietary preferences",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#diet",
+                    keywords: ["diet", "nutrition", "eating habits", "food preferences", "dietary restrictions", "meal patterns", "nutritional assessment"]
+                },
+                {
+                    title: "Social & Support Assessment",
+                    description: "Evaluate social connections and support systems",
+                    category: "Questionnaire",
+                    url: "questionnaire.html#social",
+                    keywords: ["social support", "social connections", "family support", "friends", "living environment", "social factors", "support system"]
+                },
+                {
+                    title: "Health Score",
+                    description: "View overall health score and risk assessment",
+                    category: "Dashboard",
+                    url: "dashboard.html#health-score",
+                    keywords: ["health score", "overall health", "risk assessment", "health rating", "wellness score", "health status"]
+                },
+                {
+                    title: "Weekly Reports",
+                    description: "View weekly health trends and insights",
+                    category: "Dashboard",
+                    url: "dashboard.html#reports",
+                    keywords: ["weekly reports", "health trends", "insights", "progress reports", "health analytics", "trends"]
+                },
+                {
+                    title: "AI Health Assistant",
+                    description: "Get help from AI assistant",
+                    category: "Support",
+                    url: "#chatbot",
+                    keywords: ["ai assistant", "help", "support", "chatbot", "health assistant", "guidance", "questions", "assistance"]
+                }
+            ];
+            
+            // Search functionality
+            universalSearch.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                
+                if (query.length < 2) {
+                    searchResults.classList.add('hidden');
+                    return;
+                }
+                
+                // Search through database
+                const results = searchDatabase.filter(item => {
+                    return item.title.toLowerCase().includes(query) ||
+                           item.description.toLowerCase().includes(query) ||
+                           item.keywords.some(keyword => keyword.toLowerCase().includes(query));
+                });
+                
+                displaySearchResults(results);
+            });
+            
+            // Display universal search results
+            function displayUniversalSearchResults(results) {
+                if (results.length === 0) {
+                    universalSearchResults.innerHTML = `
+                        <div class="p-4 text-center text-gray-500">
+                            <i class="fas fa-search mb-2"></i>
+                            <p>No results found</p>
+                        </div>
+                    `;
+                } else {
+                    universalSearchResults.innerHTML = results.map(item => `
+                        <div class="search-result-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" data-url="${item.url}">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-${getIconForCategory(item.category)} text-indigo-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="text-sm font-medium text-gray-900 truncate">${item.title}</h4>
+                                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${item.category}</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-1">${item.description}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                universalSearchResults.classList.remove('hidden');
+                
+                // Add click handlers to results
+                document.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const url = this.getAttribute('data-url');
+                        if (url.startsWith('#')) {
+                            // Handle in-page navigation (like chatbot)
+                            if (url === '#chatbot') {
+                                document.getElementById('chatbot-toggle').click();
+                            }
+                        } else {
+                            window.location.href = url;
+                        }
+                        searchResults.classList.add('hidden');
+                        universalSearch.value = '';
+                    });
+                });
+            }
+            
+            // Get icon for category
+            function getIconForCategory(category) {
+                const icons = {
+                    'Navigation': 'compass',
+                    'Assessment': 'clipboard-list',
+                    'Nutrition': 'apple-alt',
+                    'Food Tracker': 'utensils',
+                    'Dashboard': 'chart-line',
+                    'Questionnaire': 'question-circle',
+                    'Support': 'robot'
+                };
+                return icons[category] || 'search';
+            }
+            
+            // Close universal search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#universal-search') && !e.target.closest('#search-results')) {
+                    universalSearchResults.classList.add('hidden');
+                }
+            });
+            
+            // Keyboard navigation
+            universalSearch.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    universalSearchResults.classList.add('hidden');
+                    this.blur();
+                }
+            });
+
+            // Add these new functions for data persistence
+            function saveUserData() {
+                const dataToSave = {
+                    calorieGoal: userData.calorieGoal,
+                    carbsGoal: userData.carbsGoal,
+                    proteinGoal: userData.proteinGoal,
+                    fatGoal: userData.fatGoal,
+                    meals: userData.meals,
+                    caloriesBurned: userData.caloriesBurned,
+                    currentDate: userData.currentDate.toISOString()
+                };
+                localStorage.setItem('nutritionTrackerData', JSON.stringify(dataToSave));
+            }
+
+            function loadUserData() {
+                const savedData = localStorage.getItem('nutritionTrackerData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    userData.calorieGoal = data.calorieGoal || 2000;
+                    userData.carbsGoal = data.carbsGoal || 250;
+                    userData.proteinGoal = data.proteinGoal || 125;
+                    userData.fatGoal = data.fatGoal || 65;
+                    userData.meals = data.meals || {
+                        breakfast: [],
+                        lunch: [],
+                        dinner: [],
+                        snacks: []
+                    };
+                    userData.caloriesBurned = data.caloriesBurned || 0;
+                    userData.currentDate = new Date(data.currentDate || Date.now());
+                    
+                    // Update UI with loaded data
+                    updateMealDisplay('breakfast');
+                    updateMealDisplay('lunch');
+                    updateMealDisplay('dinner');
+                    updateMealDisplay('snacks');
+                    updateNutritionSummary();
+                }
+            }
+
+            function loadUserDataForDate() {
+                // For now, just reset data when changing dates
+                // In a real app, you'd load data for the specific date
+                resetDailyData();
+            }
+            
+            console.log('App initialization complete!');
+            
+        } catch (error) {
+            console.error('Error initializing app:', error);
+            alert('There was an error loading the app. Please refresh the page.');
+        }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'961d1a9cf7493f56',t:'MTc1Mjk1ODM2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
