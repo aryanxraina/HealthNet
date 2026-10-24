@@ -94,7 +94,7 @@ const Chatbot = () => {
       </div>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-[calc(100vw-3rem)] sm:w-80 md:w-96 h-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+        <div className="fixed bottom-24 right-6 w-[calc(100vw-3rem)] sm:w-80 md:w-96 h-96 bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 z-50">
           <div className="bg-indigo-600 text-white p-4 rounded-t-lg">
             <div className="flex justify-between items-center">
               <div className="flex items-center">
@@ -122,7 +122,7 @@ const Chatbot = () => {
                   className={`rounded-lg p-3 max-w-xs ${
                     message.sender === 'user'
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-indigo-100 text-indigo-800'
+                      : 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200'
                   }`}
                 >
                   <p className="text-sm">{message.text}</p>
@@ -132,7 +132,7 @@ const Chatbot = () => {
             
             {isTyping && (
               <div className="flex items-start">
-                <div className="bg-indigo-100 text-indigo-800 rounded-lg p-3 max-w-xs">
+                <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200 rounded-lg p-3 max-w-xs">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -144,7 +144,7 @@ const Chatbot = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 dark:border-slate-700">
             <div className="flex space-x-2">
               <input
                 type="text"
@@ -153,7 +153,7 @@ const Chatbot = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me anything..."
                 aria-label="Message the health assistant"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 disabled={isTyping}
               />
               <button

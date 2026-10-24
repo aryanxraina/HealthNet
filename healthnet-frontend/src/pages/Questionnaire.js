@@ -1,499 +1,522 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import ComingSoonBadge from '../components/ComingSoonBadge';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Lock, Minus, Sparkles } from 'lucide-react';
+import { useUserData } from '../context/UserDataContext';
+import { useTranslation } from '../i18n';
+import DataStatusBanner from '../components/DataStatusBanner';
+import QuestionField from '../components/questionnaire/QuestionField';
+import ProgressTracker, { SectionNav } from '../components/questionnaire/ProgressTracker';
+import { isAnswered } from '../questionnaire/answers';
+import {
+  firstUnfinishedSection,
+  migrateLegacyAnswers,
+  pruneHidden,
+  sectionStatus,
+  validateSection,
+  visibleQuestions,
+  visibleSections,
+} from '../questionnaire/progress';
+import { SCORES, readyScoreIds, scoreReadiness, scoresForSection } from '../questionnaire/scores';
+import { sectionById } from '../questionnaire/sections';
 
-const SECTIONS = [
-  {
-    id: 'personal',
-    title: 'Personal Information',
-    description: 'Add your basic information',
-    tileClass: 'bg-blue-50 border-blue-500',
-    icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-    available: true
-  },
-  {
-    id: 'lifestyle',
-    title: 'Lifestyle & Habits',
-    description: 'Add your lifestyle habits',
-    tileClass: 'bg-green-50 border-green-500',
-    icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-    available: true
-  },
-  {
-    id: 'medical',
-    title: 'Medical History',
-    description: 'Add your medical history',
-    tileClass: 'bg-red-50 border-red-500',
-    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    available: true
-  },
-  {
-    id: 'vitals',
-    title: 'Vitals Tracking',
-    description: 'Add your vital measurements',
-    tileClass: 'bg-orange-50 border-orange-500',
-    icon: 'M13 10V3L4 14h7v7l9-11h-7z'
-  },
-  {
-    id: 'mental',
-    title: 'Mental Health',
-    description: 'Add your mental health info',
-    tileClass: 'bg-purple-50 border-purple-500',
-    icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'
-  },
-  {
-    id: 'checkups',
-    title: 'Preventive Checkups',
-    description: 'Add checkup information',
-    tileClass: 'bg-gray-50 border-gray-500',
-    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'
-  },
-  {
-    id: 'device',
-    title: 'Wellness Device Tracking',
-    description: 'Add device tracking info',
-    tileClass: 'bg-emerald-50 border-emerald-500',
-    icon: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z'
-  }
-];
+// Guided questionnaire: one section per step, a live progress tracker, autosave,
+// and a review step showing which scores the answers unlock.
 
-const AVAILABLE_SECTIONS = SECTIONS.filter(section => section.available);
+const AUTOSAVE_DELAY = 800;
+const TOAST_DURATION = 4500;
+const MAX_UNLOCK_CHIPS = 4;
 
-const GENDER_OPTIONS = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' }
-];
+const cardClass = 'rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900';
+const primaryButton =
+  'inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-offset-slate-900';
+const secondaryButton =
+  'inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-gray-200 dark:hover:bg-slate-800';
 
-const EXERCISE_OPTIONS = [
-  { value: 'never', label: 'Never' },
-  { value: 'rarely', label: 'Rarely (1-2 times/month)' },
-  { value: 'sometimes', label: 'Sometimes (1-2 times/week)' },
-  { value: 'regularly', label: 'Regularly (3-5 times/week)' },
-  { value: 'daily', label: 'Daily' }
-];
-
-const SMOKING_OPTIONS = [
-  { value: 'never', label: 'Never smoked' },
-  { value: 'former', label: 'Former smoker' },
-  { value: 'current', label: 'Current smoker' }
-];
-
-const ALCOHOL_OPTIONS = [
-  { value: 'never', label: 'Never' },
-  { value: 'occasionally', label: 'Occasionally' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'heavy', label: 'Heavy' }
-];
-
-const CONDITION_OPTIONS = [
-  { value: 'diabetes', label: 'Diabetes' },
-  { value: 'hypertension', label: 'Hypertension' },
-  { value: 'heart_disease', label: 'Heart Disease' },
-  { value: 'asthma', label: 'Asthma' },
-  { value: 'none', label: 'None' }
-];
-
-// Answers stay in this browser, per signed-in user, until there's a backend to store them
-const storageKey = (uid) => `healthnet:questionnaire:${uid}`;
-
-const loadAnswers = (uid) => {
-  try {
-    return JSON.parse(localStorage.getItem(storageKey(uid))) || {};
-  } catch {
-    return {};
-  }
+// Answers that are out of range or not a real date are kept on screen but never saved
+const savableAnswers = (section, answers, units) => {
+  const errors = validateSection(section, answers, units);
+  return Object.fromEntries(
+    Object.entries(pruneHidden(section, answers)).filter(
+      ([key]) => !errors[key] || errors[key].key === 'questionnaire.errors.required'
+    )
+  );
 };
 
-const labelClass = 'block text-sm font-medium text-gray-700 mb-2';
-
-// Full class names (not built from strings) so Tailwind can find them
-const THEMES = {
-  blue: { input: 'focus:ring-blue-500', button: 'bg-blue-600 hover:bg-blue-700' },
-  green: { input: 'focus:ring-green-500', button: 'bg-green-600 hover:bg-green-700' },
-  red: { input: 'focus:ring-red-500', button: 'bg-red-600 hover:bg-red-700' }
+const nextSectionId = (sectionId, answers) => {
+  const sections = visibleSections(answers);
+  const index = sections.findIndex((section) => section.id === sectionId);
+  return sections[index + 1]?.id ?? 'review';
 };
 
-const inputClass = (theme) =>
-  `w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 ${THEMES[theme].input} focus:border-transparent`;
+const previousSectionId = (sectionId, answers) => {
+  const sections = visibleSections(answers);
+  if (sectionId === 'review') return sections[sections.length - 1].id;
+  const index = sections.findIndex((section) => section.id === sectionId);
+  return index > 0 ? sections[index - 1].id : null;
+};
 
-const Modal = ({ title, onClose, children }) => {
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+const UnlockChips = ({ sectionId, answers }) => {
+  const { t } = useTranslation();
+  const scores = scoresForSection(sectionId)
+    .map((id) => ({ id, readiness: scoreReadiness(SCORES.find((score) => score.id === id), answers) }))
+    .filter(({ readiness }) => readiness.state !== 'notApplicable');
+  if (scores.length === 0) return null;
+  const shown = scores.slice(0, MAX_UNLOCK_CHIPS);
+  const hidden = scores.length - shown.length;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="questionnaire-modal-title"
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-      >
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 id="questionnaire-modal-title" className="text-2xl font-bold text-gray-900">{title}</h2>
-          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-700" aria-label="Close">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+    <div className="mt-5 flex flex-wrap items-center gap-2">
+      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {t('questionnaire.unlocks')}
+      </span>
+      {shown.map(({ id, readiness }) => {
+        const ready = readiness.state === 'ready';
+        const Icon = ready ? CheckCircle2 : Lock;
+        return (
+          <span
+            key={id}
+            title={ready ? t('questionnaire.review.ready') : missingText(t, readiness.missing)}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+              ready
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-gray-300'
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+            {t(`questionnaire.scores.${id}`)}
+          </span>
+        );
+      })}
+      {hidden > 0 && (
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+          {t('questionnaire.moreScores', { count: hidden })}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const missingText = (t, count) =>
+  count === 1 ? t('questionnaire.review.missingOne') : t('questionnaire.review.missingMany', { count });
+
+const ScoreRow = ({ score, answers }) => {
+  const { t } = useTranslation();
+  const readiness = scoreReadiness(score, answers);
+  let badge;
+  if (readiness.state === 'ready') {
+    badge = (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+        {t('questionnaire.review.ready')}
+      </span>
+    );
+  } else if (readiness.state === 'notApplicable') {
+    badge = <span className="text-xs text-gray-500 dark:text-gray-400">{t('questionnaire.review.womenOnly')}</span>;
+  } else {
+    badge = (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+        <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+        {missingText(t, readiness.missing)}
+      </span>
+    );
+  }
+  return (
+    <li className="flex items-center justify-between gap-3 py-3">
+      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{t(`questionnaire.scores.${score.id}`)}</span>
+      {badge}
+    </li>
+  );
+};
+
+const SectionStatusIcon = ({ status }) => {
+  if (status === 'complete') return <CheckCircle2 className="h-5 w-5 text-emerald-500" aria-hidden="true" />;
+  if (status === 'skipped') return <Minus className="h-5 w-5 text-gray-400" aria-hidden="true" />;
+  return <span className="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-slate-600" aria-hidden="true" />;
+};
+
+const ReviewStep = ({ answers, onEdit, onBack, headingRef }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const sections = visibleSections(answers);
+  const requiredDone = sections
+    .filter((section) => !section.optional)
+    .every((section) => sectionStatus(section, answers) === 'complete');
+
+  return (
+    <div className="animate-fade-in-up space-y-6 motion-reduce:animate-none">
+      <section className={`${cardClass} p-6 sm:p-8`}>
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20">
+            <Sparkles className="h-6 w-6" aria-hidden="true" />
+          </span>
+          <div>
+            <h2 ref={headingRef} tabIndex={-1} className="text-xl font-bold text-gray-900 focus:outline-none dark:text-gray-100 sm:text-2xl">
+              {requiredDone ? t('questionnaire.review.title') : t('questionnaire.review.almostTitle')}
+            </h2>
+            <p className="mt-1 text-gray-600 dark:text-gray-300">{t('questionnaire.review.subtitle')}</p>
+          </div>
+        </div>
+
+        <h3 className="mt-8 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          {t('questionnaire.review.scoresTitle')}
+        </h3>
+        <ul className="mt-2 divide-y divide-gray-100 dark:divide-slate-800">
+          {SCORES.map((score) => (
+            <ScoreRow key={score.id} score={score} answers={answers} />
+          ))}
+        </ul>
+
+        <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button type="button" onClick={onBack} className={secondaryButton}>
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            {t('questionnaire.back')}
+          </button>
+          <button type="button" onClick={() => navigate('/dashboard')} className={primaryButton}>
+            {t('questionnaire.review.goDashboard')}
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
-        {children}
-      </div>
+        <p className="mt-3 text-right text-xs text-gray-500 dark:text-gray-400">{t('questionnaire.review.dashboardNote')}</p>
+      </section>
+
+      <section className={`${cardClass} p-6 sm:p-8`}>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          {t('questionnaire.review.sectionsTitle')}
+        </h3>
+        <ul className="mt-2 divide-y divide-gray-100 dark:divide-slate-800">
+          {sections.map((section) => {
+            const status = sectionStatus(section, answers);
+            const title = t(`questionnaire.sections.${section.id}.title`);
+            return (
+              <li key={section.id} className="flex items-center gap-3 py-3">
+                <SectionStatusIcon status={status} />
+                <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+                  {title}
+                  <span className="ml-2 font-normal text-gray-500 dark:text-gray-400">{t(`questionnaire.status.${status}`)}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onEdit(section.id)}
+                  aria-label={`${t('questionnaire.review.edit')}: ${title}`}
+                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                >
+                  {t('questionnaire.review.edit')}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
-};
-
-const FormActions = ({ onCancel, theme }) => (
-  <div className="flex justify-end space-x-3 pt-4">
-    <button
-      type="button"
-      onClick={onCancel}
-      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-    >
-      Cancel
-    </button>
-    <button type="submit" className={`px-4 py-2 text-white rounded-md transition-colors ${THEMES[theme].button}`}>
-      Save
-    </button>
-  </div>
-);
-
-const RadioGroup = ({ legend, name, options, value, onChange }) => (
-  <fieldset>
-    <legend className={labelClass}>{legend}</legend>
-    <div className="flex flex-wrap gap-4">
-      {options.map(option => (
-        <label key={option.value} className="flex items-center">
-          <input
-            type="radio"
-            name={name}
-            value={option.value}
-            checked={value === option.value}
-            onChange={(e) => onChange(e.target.value)}
-            className="mr-2"
-            required
-          />
-          {option.label}
-        </label>
-      ))}
-    </div>
-  </fieldset>
-);
-
-const PersonalForm = ({ initial, onSave, onCancel }) => {
-  const [form, setForm] = useState({ name: '', gender: '', age: '', height: '', weight: '', ...initial });
-  const setField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({
-      ...form,
-      name: form.name.trim(),
-      age: Number(form.age),
-      height: Number(form.height),
-      weight: Number(form.weight)
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-6">
-      <div>
-        <label htmlFor="personal-name" className={labelClass}>What is your full name?</label>
-        <input
-          id="personal-name"
-          type="text"
-          value={form.name}
-          onChange={(e) => setField('name', e.target.value)}
-          autoComplete="name"
-          className={inputClass('blue')}
-          required
-        />
-      </div>
-
-      <RadioGroup
-        legend="What is your gender?"
-        name="gender"
-        options={GENDER_OPTIONS}
-        value={form.gender}
-        onChange={(value) => setField('gender', value)}
-      />
-
-      <div>
-        <label htmlFor="personal-age" className={labelClass}>What is your age?</label>
-        <input
-          id="personal-age"
-          type="number"
-          min="1"
-          max="120"
-          value={form.age}
-          onChange={(e) => setField('age', e.target.value)}
-          className={inputClass('blue')}
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="personal-height" className={labelClass}>What is your height (cm)?</label>
-        <input
-          id="personal-height"
-          type="number"
-          min="50"
-          max="250"
-          step="0.1"
-          value={form.height}
-          onChange={(e) => setField('height', e.target.value)}
-          className={inputClass('blue')}
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="personal-weight" className={labelClass}>What is your weight (kg)?</label>
-        <input
-          id="personal-weight"
-          type="number"
-          min="20"
-          max="300"
-          step="0.1"
-          value={form.weight}
-          onChange={(e) => setField('weight', e.target.value)}
-          className={inputClass('blue')}
-          required
-        />
-      </div>
-
-      <FormActions onCancel={onCancel} theme="blue" />
-    </form>
-  );
-};
-
-const LifestyleForm = ({ initial, onSave, onCancel }) => {
-  const [form, setForm] = useState({ exercise: '', smoking: '', alcohol: '', ...initial });
-  const setField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(form);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-6">
-      <RadioGroup
-        legend="How often do you exercise?"
-        name="exercise"
-        options={EXERCISE_OPTIONS}
-        value={form.exercise}
-        onChange={(value) => setField('exercise', value)}
-      />
-      <RadioGroup
-        legend="Do you smoke?"
-        name="smoking"
-        options={SMOKING_OPTIONS}
-        value={form.smoking}
-        onChange={(value) => setField('smoking', value)}
-      />
-      <RadioGroup
-        legend="How much alcohol do you consume?"
-        name="alcohol"
-        options={ALCOHOL_OPTIONS}
-        value={form.alcohol}
-        onChange={(value) => setField('alcohol', value)}
-      />
-
-      <FormActions onCancel={onCancel} theme="green" />
-    </form>
-  );
-};
-
-const MedicalForm = ({ initial, onSave, onCancel }) => {
-  const [form, setForm] = useState({ conditions: [], medications: '', allergies: '', ...initial });
-  const [error, setError] = useState('');
-
-  // "None" can't be combined with a condition, so ticking one clears the other
-  const toggleCondition = (value) => {
-    setError('');
-    setForm(prev => {
-      if (value === 'none') {
-        return { ...prev, conditions: prev.conditions.includes('none') ? [] : ['none'] };
-      }
-      const conditions = prev.conditions.filter(condition => condition !== 'none');
-      return {
-        ...prev,
-        conditions: conditions.includes(value)
-          ? conditions.filter(condition => condition !== value)
-          : [...conditions, value]
-      };
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (form.conditions.length === 0) {
-      setError('Select at least one option, or choose "None".');
-      return;
-    }
-    onSave({ ...form, medications: form.medications.trim(), allergies: form.allergies.trim() });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-6">
-      <fieldset>
-        <legend className={labelClass}>Do you have any chronic conditions?</legend>
-        <div className="flex flex-wrap gap-4">
-          {CONDITION_OPTIONS.map(option => (
-            <label key={option.value} className="flex items-center">
-              <input
-                type="checkbox"
-                checked={form.conditions.includes(option.value)}
-                onChange={() => toggleCondition(option.value)}
-                className="mr-2"
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
-        {error && <p role="alert" className="mt-2 text-sm text-red-600">{error}</p>}
-      </fieldset>
-
-      <div>
-        <label htmlFor="medical-medications" className={labelClass}>Are you currently taking any medications?</label>
-        <textarea
-          id="medical-medications"
-          value={form.medications}
-          onChange={(e) => setForm(prev => ({ ...prev, medications: e.target.value }))}
-          className={inputClass('red')}
-          rows="3"
-          placeholder="List your current medications..."
-        />
-      </div>
-
-      <div>
-        <label htmlFor="medical-allergies" className={labelClass}>Do you have any allergies?</label>
-        <textarea
-          id="medical-allergies"
-          value={form.allergies}
-          onChange={(e) => setForm(prev => ({ ...prev, allergies: e.target.value }))}
-          className={inputClass('red')}
-          rows="3"
-          placeholder="List any allergies..."
-        />
-      </div>
-
-      <FormActions onCancel={onCancel} theme="red" />
-    </form>
-  );
-};
-
-const FORMS = {
-  personal: PersonalForm,
-  lifestyle: LifestyleForm,
-  medical: MedicalForm
 };
 
 const Questionnaire = () => {
-  const { user } = useAuth();
-  const [answers, setAnswers] = useState(() => loadAnswers(user.uid));
-  const [activeSection, setActiveSection] = useState(null);
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Answers live in Firestore per signed-in user (see UserDataContext)
+  const { status, answers, settings, saveAnswers, saveStatus } = useUserData();
+  const [currentId, setCurrentId] = useState(null);
+  const [draft, setDraft] = useState({});
+  const [errors, setErrors] = useState({});
+  const [unlocked, setUnlocked] = useState([]);
+  const dirty = useRef(false);
+  const readyAtEntry = useRef([]);
+  const stepChanged = useRef(false);
+  const fieldRefs = useRef({});
+  const headingRef = useRef(null);
 
+  const section = currentId && currentId !== 'review' ? sectionById(currentId) : null;
+  const units = settings.units;
+
+  // Saved answers with the section being edited swapped in, so progress and follow-up questions react as you type
+  const merged = useMemo(
+    () => (currentId && currentId !== 'review' ? { ...answers, [currentId]: draft } : answers),
+    [answers, currentId, draft]
+  );
+
+  const enterStep = useCallback((id, base) => {
+    setCurrentId(id);
+    setDraft(id === 'review' ? {} : { ...base[id] });
+    setErrors({});
+    dirty.current = false;
+    readyAtEntry.current = readyScoreIds(base);
+  }, []);
+
+  // Start where the user left off (or at #section from a link), after moving answers from the first version
   useEffect(() => {
-    try {
-      localStorage.setItem(storageKey(user.uid), JSON.stringify(answers));
-    } catch {
-      // Storage can be unavailable (e.g. private browsing); answers still work for this visit
+    if (status !== 'ready') {
+      setCurrentId(null);
+      return;
     }
-  }, [answers, user.uid]);
+    if (currentId !== null) return;
+    const migrated = migrateLegacyAnswers(answers);
+    Object.entries(migrated).forEach(([id, data]) => saveAnswers(id, data).catch(() => {}));
+    const effective = { ...answers, ...migrated };
+    const requested = location.hash.slice(1);
+    const linked = visibleSections(effective).some((item) => item.id === requested);
+    enterStep(linked ? requested : firstUnfinishedSection(effective) ?? 'review', effective);
+  }, [status, currentId, answers, saveAnswers, location.hash, enterStep]);
 
-  const closeModal = useCallback(() => setActiveSection(null), []);
-
-  const saveSection = (data) => {
-    setAnswers(prev => ({ ...prev, [activeSection]: data }));
-    setActiveSection(null);
+  // Saves the current section now. Without a status it keeps the saved one, unless the answers are no longer complete.
+  const saveCurrent = (newStatus) => {
+    if (!section) return answers;
+    const payload = savableAnswers(section, merged, units);
+    if (newStatus) {
+      payload._status = newStatus;
+    } else if (payload._status === 'complete' && Object.keys(validateSection(section, merged, units)).length > 0) {
+      delete payload._status;
+    }
+    const statusChanged = (answers[section.id]?._status ?? null) !== (payload._status ?? null);
+    if (dirty.current || statusChanged) {
+      dirty.current = false;
+      // Failures show in DataStatusBanner; answers stay on screen either way
+      saveAnswers(section.id, payload).catch(() => {});
+    }
+    return { ...answers, [section.id]: payload };
   };
 
-  const completedCount = AVAILABLE_SECTIONS.filter(section => answers[section.id]).length;
-  const progress = (completedCount / AVAILABLE_SECTIONS.length) * 100;
-  const comingSoonCount = SECTIONS.length - AVAILABLE_SECTIONS.length;
+  const saveRef = useRef(saveCurrent);
+  saveRef.current = saveCurrent;
 
-  const activeConfig = SECTIONS.find(section => section.id === activeSection);
-  const ActiveForm = activeSection ? FORMS[activeSection] : null;
+  // Autosave shortly after the user stops answering
+  useEffect(() => {
+    if (!dirty.current) return undefined;
+    const timer = setTimeout(() => saveRef.current(), AUTOSAVE_DELAY);
+    return () => clearTimeout(timer);
+  }, [draft]);
+
+  // Don't lose the last answers when leaving the page mid-section
+  useEffect(() => {
+    const latest = saveRef;
+    return () => {
+      if (dirty.current) latest.current();
+    };
+  }, []);
+
+  // Move focus to the new step's heading and scroll it into view
+  useEffect(() => {
+    if (!stepChanged.current) return;
+    stepChanged.current = false;
+    headingRef.current?.focus({ preventScroll: true });
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentId]);
+
+  useEffect(() => {
+    if (unlocked.length === 0) return undefined;
+    const timer = setTimeout(() => setUnlocked([]), TOAST_DURATION);
+    return () => clearTimeout(timer);
+  }, [unlocked]);
+
+  const goTo = (id, base) => {
+    const newlyReady = readyScoreIds(base).filter((scoreId) => !readyAtEntry.current.includes(scoreId));
+    if (newlyReady.length > 0) setUnlocked(newlyReady);
+    stepChanged.current = true;
+    enterStep(id, base);
+  };
+
+  const setField = (questionId, value) => {
+    dirty.current = true;
+    setDraft((current) => {
+      const next = { ...current };
+      if (isAnswered(value)) {
+        next[questionId] = value;
+      } else {
+        delete next[questionId];
+      }
+      return next;
+    });
+    setErrors((current) => {
+      if (!current[questionId]) return current;
+      const { [questionId]: _cleared, ...rest } = current;
+      return rest;
+    });
+  };
+
+  const handleNext = (event) => {
+    event.preventDefault();
+    const found = validateSection(section, merged, units);
+    if (Object.keys(found).length > 0) {
+      setErrors(found);
+      const first = visibleQuestions(section, merged).find((question) => found[question.id]);
+      // Centered so the sticky progress tracker never covers the field
+      const element = fieldRefs.current[first.id];
+      element?.focus({ preventScroll: true });
+      element?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      return;
+    }
+    const saved = saveCurrent('complete');
+    goTo(nextSectionId(section.id, saved), saved);
+  };
+
+  const handleSkip = () => {
+    const saved = saveCurrent('skipped');
+    goTo(nextSectionId(section.id, saved), saved);
+  };
+
+  const handleBack = () => {
+    const saved = saveCurrent();
+    const previous = previousSectionId(currentId, saved);
+    if (previous) goTo(previous, saved);
+  };
+
+  const handleJump = (id) => {
+    if (id === currentId) return;
+    goTo(id, saveCurrent());
+  };
+
+  const handleFinishLater = () => {
+    saveCurrent();
+    navigate('/dashboard');
+  };
+
+  if (status === 'loading' || status === 'idle' || (status === 'ready' && currentId === null)) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center" role="status">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+        <span className="sr-only">{t('common.loading')}</span>
+      </div>
+    );
+  }
+
+  const sections = visibleSections(merged);
+  const errorCount = Object.keys(errors).length;
+  const isFirst = section && sections[0].id === section.id;
+  const isLast = section && sections[sections.length - 1].id === section.id;
+  const unitsKey = `${units.system}-${units.lab}-${units.temperature}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Health Questionnaire</h1>
-            <p className="mt-2 text-lg text-gray-600">Complete each section to create your personalized health profile</p>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>{completedCount} of {AVAILABLE_SECTIONS.length} sections complete</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <div
-              className="h-2 bg-gray-200 rounded-full overflow-hidden"
-              role="progressbar"
-              aria-label="Questionnaire progress"
-              aria-valuenow={Math.round(progress)}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            >
-              <div
-                className="h-full bg-blue-600 transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <p className="mt-2 text-sm text-gray-500">{comingSoonCount} more sections are coming soon.</p>
-          </div>
-
-          {/* Tiles Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {SECTIONS.map((section, index) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSection(section.id)}
-                disabled={!section.available}
-                className={`${section.tileClass} border-l-4 rounded-lg shadow-md p-6 aspect-square flex flex-col justify-between text-left transition-all duration-300 ${
-                  section.available ? 'hover:shadow-lg' : 'opacity-60 cursor-not-allowed'
-                }`}
-              >
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800">{index + 1}. {section.title}</h2>
-                  <p className="mt-2 text-gray-600">{section.description}</p>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-700 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={section.icon} />
-                  </svg>
-                  {!section.available && <ComingSoonBadge />}
-                  {section.available && answers[section.id] && (
-                    <span className="inline-flex items-center text-sm font-medium text-green-700">
-                      <CheckCircle2 className="h-5 w-5 mr-1" />
-                      Completed
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">{t('questionnaire.title')}</h1>
+          <p className="mt-1 text-gray-600 dark:text-gray-300">{t('questionnaire.subtitle')}</p>
         </div>
+
+        <DataStatusBanner className="mb-6" />
+
+        {status === 'error' ? (
+          <div className={`${cardClass} flex items-start gap-3 p-6 text-gray-700 dark:text-gray-200`}>
+            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" aria-hidden="true" />
+            <p>{t('questionnaire.loadError')}</p>
+          </div>
+        ) : (
+          <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
+            <aside className="hidden lg:block">
+              <div className="sticky top-24">
+                <SectionNav sections={sections} answers={merged} currentId={currentId} onJump={handleJump} />
+              </div>
+            </aside>
+
+            <div className="min-w-0">
+              <div className="sticky top-16 z-30 -mx-4 bg-gray-50 px-4 pb-3 pt-2 dark:bg-slate-950 sm:mx-0 sm:px-0 sm:pb-4 sm:pt-3">
+                <ProgressTracker
+                  sections={sections}
+                  answers={merged}
+                  currentId={currentId}
+                  saveState={saveStatus.state}
+                  onJump={handleJump}
+                  onFinishLater={handleFinishLater}
+                />
+              </div>
+
+              {currentId === 'review' || !section ? (
+                <ReviewStep answers={answers} onEdit={handleJump} onBack={handleBack} headingRef={headingRef} />
+              ) : (
+                <form
+                  key={currentId}
+                  onSubmit={handleNext}
+                  noValidate
+                  className={`${cardClass} animate-fade-in-up motion-reduce:animate-none`}
+                >
+                  <div className="border-b border-gray-100 p-6 dark:border-slate-800 sm:p-8">
+                    <div className="flex items-start gap-4">
+                      <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/20">
+                        <section.icon className="h-6 w-6" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2
+                            ref={headingRef}
+                            tabIndex={-1}
+                            className="text-xl font-bold text-gray-900 focus:outline-none dark:text-gray-100 sm:text-2xl"
+                          >
+                            {t(`questionnaire.sections.${section.id}.title`)}
+                          </h2>
+                          {section.optional && (
+                            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-slate-800 dark:text-gray-300">
+                              {t('questionnaire.optional')}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-gray-600 dark:text-gray-300">{t(`questionnaire.sections.${section.id}.description`)}</p>
+                      </div>
+                    </div>
+                    <UnlockChips sectionId={section.id} answers={merged} />
+                  </div>
+
+                  <div className="space-y-8 p-6 sm:p-8">
+                    {errorCount > 0 && (
+                      <p
+                        role="alert"
+                        className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                      >
+                        <AlertTriangle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                        {t('questionnaire.errors.fixBelow')}
+                      </p>
+                    )}
+                    {visibleQuestions(section, merged).map((question) => (
+                      <QuestionField
+                        key={question.type === 'number' ? `${question.id}-${unitsKey}` : question.id}
+                        question={question}
+                        sectionId={section.id}
+                        value={draft[question.id]}
+                        onChange={(value) => setField(question.id, value)}
+                        error={errors[question.id]}
+                        units={units}
+                        optional={!section.optional && !question.required}
+                        firstRef={(element) => {
+                          fieldRefs.current[question.id] = element;
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 rounded-b-2xl border-t border-gray-100 bg-gray-50/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/60 sm:px-8">
+                    <button type="button" onClick={handleBack} disabled={isFirst} className={secondaryButton}>
+                      <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                      {t('questionnaire.back')}
+                    </button>
+                    <div className="flex items-center gap-2">
+                      {section.optional && (
+                        <button type="button" onClick={handleSkip} className={secondaryButton}>
+                          {t('questionnaire.skip')}
+                        </button>
+                      )}
+                      <button type="submit" className={primaryButton}>
+                        {isLast ? t('questionnaire.toReview') : t('questionnaire.next')}
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {ActiveForm && (
-        <Modal title={activeConfig.title} onClose={closeModal}>
-          <ActiveForm initial={answers[activeSection]} onSave={saveSection} onCancel={closeModal} />
-        </Modal>
+      {unlocked.length > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+          <div
+            role="status"
+            className="flex animate-fade-in-up items-center gap-2 rounded-full bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-xl motion-reduce:animate-none dark:bg-white dark:text-gray-900"
+          >
+            <Sparkles className="h-4 w-4 flex-shrink-0 text-fuchsia-300 dark:text-fuchsia-500" aria-hidden="true" />
+            {t('questionnaire.unlockedToast', { scores: unlocked.map((id) => t(`questionnaire.scores.${id}`)).join(', ') })}
+          </div>
+        </div>
       )}
     </div>
   );

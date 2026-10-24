@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// HealthNet Firestore security rules.
+// Publish them in the Firebase console: Firestore Database > Rules > paste this file > Publish.
+//
+// Every signed-in user can read and write only their own documents:
+//   users/{uid}                        profile and settings
+//   users/{uid}/data/questionnaire     questionnaire answers
+//   users/{uid}/results/latest         latest risk scores
+// Everything else is denied.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // {document=**} also matches users/{userId} itself in rules version 2
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

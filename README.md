@@ -27,8 +27,10 @@ AI-powered preventive healthcare platform that helps people anywhere understand 
 2. Go to **Authentication → Sign-in method** and enable **Email/Password** and **Google**.
 3. Copy `healthnet-frontend/.env.example` to `healthnet-frontend/.env.local` and fill in the values.
 4. Before deploying, add your site's domain under **Authentication → Settings → Authorized domains** (`localhost` is allowed by default).
+5. Go to **Firestore Database → Create database**, pick a location close to most of your users (it can't be changed later), and start in **production mode**.
+6. In Firestore's **Rules** tab, paste the contents of [`firestore.rules`](firestore.rules) and click **Publish**. Each user can then read and write only their own data.
 
-The app runs without these keys, but sign-in is disabled, so the protected pages can't be opened.
+The app runs without these keys, but sign-in is disabled, so the protected pages can't be opened. Without step 5–6, signing in works but saving settings and answers shows a "cloud storage isn't set up" message.
 
 ### 2. Run the frontend
 ```bash
