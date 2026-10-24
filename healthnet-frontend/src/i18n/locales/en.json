@@ -1,0 +1,120 @@
+{
+  "common": {
+    "comingSoon": "Coming soon",
+    "sampleData": "Sample data",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "retry": "Try again",
+    "loading": "Loading…"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "questionnaire": "Questionnaire",
+    "foodTracker": "Food Tracker"
+  },
+  "header": {
+    "openSearch": "Search HealthNet",
+    "searchPlaceholder": "Search HealthNet...",
+    "searchLabel": "Search pages and features",
+    "noResults": "No results found for \"{{query}}\"",
+    "notifications": "Notifications (coming soon)",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "signIn": "Sign in",
+    "toggleMenu": "Toggle mobile menu",
+    "categoryPage": "Page",
+    "categoryFeature": "Feature"
+  },
+  "search": {
+    "dashboard": "Dashboard",
+    "questionnaire": "Health Questionnaire",
+    "foodTracker": "Food Tracker",
+    "settings": "Settings",
+    "heartRate": "Heart Rate Monitoring",
+    "bloodPressure": "Blood Pressure Tracking",
+    "nutrition": "Nutrition Analysis",
+    "assessment": "AI Health Assessment",
+    "reports": "Health Reports"
+  },
+  "data": {
+    "errors": {
+      "permission": "Your data couldn't be loaded because the Firestore security rules haven't been published yet.",
+      "unavailable": "Couldn't reach cloud storage. Check your connection, and make sure the Firestore database has been created in the Firebase console.",
+      "notConfigured": "Cloud storage isn't set up yet. Add your Firebase keys to .env.local.",
+      "generic": "Something went wrong while syncing your data ({{code}})."
+    },
+    "saveFailed": "Your latest change couldn't be saved."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your profile, preferences and data.",
+    "profile": {
+      "title": "Profile",
+      "displayName": "Display name",
+      "displayNameHelp": "Shown in the header and on your Dashboard.",
+      "email": "Email",
+      "signInMethod": "Sign-in method",
+      "methodPassword": "Email and password",
+      "methodGoogle": "Google",
+      "nameSaved": "Name updated."
+    },
+    "preferences": {
+      "title": "Preferences",
+      "autosave": "Changes save automatically.",
+      "measurements": "Measurements",
+      "metric": "Metric (cm, kg)",
+      "imperial": "Imperial (ft, in, lb)",
+      "labValues": "Lab values",
+      "temperature": "Temperature",
+      "unitsExample": "Example: {{height}} · {{weight}} · glucose {{glucose}} · {{temperature}}",
+      "theme": "Theme",
+      "themeSystem": "System",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "language": "Language",
+      "languageHelp": "More languages are on the way.",
+      "diabetesModel": "Diabetes risk score",
+      "findrisc": "FINDRISC questionnaire",
+      "findriscHelp": "Validated in many countries. Recommended.",
+      "mlModel": "HealthNet ML model",
+      "mlModelHelp": "Experimental. Trained only on data from women of Pima heritage, so it may not apply to you."
+    },
+    "data": {
+      "title": "Your data",
+      "pdf": "Download report card (PDF)",
+      "pdfHelp": "A personalised summary of your results, plus a detail page for your doctor.",
+      "json": "Download raw data (JSON)",
+      "jsonHelp": "Everything HealthNet has saved for you, in a machine-readable file."
+    },
+    "account": {
+      "title": "Account",
+      "password": "Password",
+      "resetHelp": "We'll email you a link to set a new password.",
+      "resetButton": "Email me a reset link",
+      "resetSent": "Reset link sent to {{email}}.",
+      "googleManaged": "You sign in with Google, so your password is managed in your Google account.",
+      "deleteTitle": "Delete account",
+      "deleteHelp": "Permanently delete your account and all saved health data.",
+      "deleteButton": "Delete my account",
+      "deleteWarning": "This deletes your account, questionnaire answers and results for good. It can't be undone.",
+      "deleteTypeLabel": "Type {{word}} to confirm",
+      "deleteWord": "DELETE",
+      "deletePassword": "Current password",
+      "deleteGoogleNote": "You'll be asked to confirm with your Google account.",
+      "deleteConfirm": "Permanently delete",
+      "deleting": "Deleting…",
+      "errors": {
+        "wrongPassword": "That password isn't right.",
+        "popupClosed": "The confirmation window was closed before finishing.",
+        "userMismatch": "Please confirm with the same Google account you signed in with.",
+        "tooManyRequests": "Too many attempts. Please wait a moment and try again.",
+        "dataNotDeleted": "Your saved data couldn't be deleted, so your account was kept. Please try again.",
+        "generic": "Something went wrong ({{code}}). Please try again."
+      }
+    }
+  }
+}

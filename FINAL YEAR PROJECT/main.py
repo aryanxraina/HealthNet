@@ -1,38 +1,29 @@
+import os
+
+import uvicorn
 from fastapi import FastAPI
-from pydantic import BaseModel
-import pickle
-import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 
-model = pickle.load(open("diabetes_model.pkl", "rb"))
+from predict import router as predict_router
 
-class DiabetesInput(BaseModel):
-    Pregnancies: int
-    Glucose: float
-    BloodPressure: float
-    SkinThickness: float
-    Insulin: float
-    BMI: float
-    DiabetesPedigreeFunction: float
-    Age: int
+app = FastAPI(title="HealthNet API")
 
-app = FastAPI()
+# Comma-separated frontend origins allowed to call the API,
+# e.g. ALLOWED_ORIGINS="https://healthnet.example,http://localhost:3000"
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.post("/predict-diabetes")
-def predict(data: DiabetesInput):
-    features = np.array([[data.Pregnancies, data.Glucose, data.BloodPressure,
-                          data.SkinThickness, data.Insulin, data.BMI,
-                          data.DiabetesPedigreeFunction, data.Age]])
-    prediction = model.predict(features)[0]
-    probability = model.predict_proba(features)[0][1]
-    return {
-        "prediction": int(prediction),
-        "probability": round(probability, 2)
-    }
+app.include_router(predict_router)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

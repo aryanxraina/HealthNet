@@ -1,0 +1,7 @@
+fastapi>=0.115
+uvicorn>=0.30
+pandas>=2.2
+numpy>=2.0
+# Pinned on purpose: diabetes_model.pkl only loads reliably with the scikit-learn
+# version that trained it. If you change this, re-run train_diabetes_model.py.
+scikit-learn==1.8.0

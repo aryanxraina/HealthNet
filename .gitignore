@@ -1,8 +1,5 @@
 ﻿# Node
 node_modules/
-client/node_modules/
-healthnet-frontend/node_modules/
-healthnet-backend/node_modules/
 
 # Build outputs
 build/
@@ -33,6 +30,7 @@ Thumbs.db
 # Env/Secrets
 .env
 .env.*
+!.env.example
 
 # Misc
 *.swp
