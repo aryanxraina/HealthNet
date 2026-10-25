@@ -16,7 +16,20 @@ import {
   signOut,
   deleteUser,
 } from 'firebase/auth';
-import { initializeFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  collection,
+  doc,
+  documentId,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  setDoc,
+  deleteDoc,
+  serverTimestamp,
+  writeBatch,
+} from 'firebase/firestore';
 
 // Values come from healthnet-frontend/.env.local (see .env.example)
 const firebaseConfig = {
@@ -105,11 +118,15 @@ export const reauthenticate = (password) => {
 
 export const deleteAccount = () => (auth?.currentUser ? deleteUser(auth.currentUser) : notConfigured());
 
-// ---- Firestore: users/{uid}, users/{uid}/data/questionnaire, users/{uid}/results/latest ----
+// ---- Firestore: users/{uid}, users/{uid}/data/questionnaire, users/{uid}/results/latest, food and activity days ----
 
 const userDoc = (uid) => doc(db, 'users', uid);
 const questionnaireDoc = (uid) => doc(db, 'users', uid, 'data', 'questionnaire');
 const resultsDoc = (uid) => doc(db, 'users', uid, 'results', 'latest');
+// One document per day of food, keyed 'YYYY-MM-DD': { meals: { breakfast: [...], ... } }
+const foodDays = (uid) => collection(db, 'users', uid, 'food');
+// One document per day of wearable readings, keyed 'YYYY-MM-DD': { steps, restingHeartRate, sleepMinutes, source }
+const activityDays = (uid) => collection(db, 'users', uid, 'activity');
 
 export const loadUserData = async (uid) => {
   if (!db) {
@@ -146,11 +163,62 @@ export const saveSection = (uid, sectionId, answers) =>
 export const saveResults = (uid, results) =>
   db ? setDoc(resultsDoc(uid), { ...results, savedAt: serverTimestamp() }) : notConfigured();
 
+export const loadFoodDay = async (uid, date) => {
+  if (!db) {
+    return notConfigured();
+  }
+  const day = await getDoc(doc(foodDays(uid), date));
+  return day.data()?.meals ?? {};
+};
+
+export const saveFoodDay = (uid, date, meals) =>
+  db ? setDoc(doc(foodDays(uid), date), { meals, updatedAt: serverTimestamp() }) : notConfigured();
+
+// { 'YYYY-MM-DD': meals } for every logged day from `from` to `to` (inclusive)
+export const loadFoodRange = async (uid, from, to) => {
+  if (!db) {
+    return notConfigured();
+  }
+  const snapshot = await getDocs(query(foodDays(uid), where(documentId(), '>=', from), where(documentId(), '<=', to)));
+  return Object.fromEntries(snapshot.docs.map((day) => [day.id, day.data().meals ?? {}]));
+};
+
+// Saves synced daily summaries ([{ date, steps, restingHeartRate, sleepMinutes }]), replacing those days
+export const saveActivityDays = async (uid, days, source) => {
+  if (!db) {
+    return notConfigured();
+  }
+  // Firestore batches hold up to 500 writes; a sync returns at most 90 days
+  const batch = writeBatch(db);
+  days.forEach(({ date, ...values }) => batch.set(doc(activityDays(uid), date), { ...values, source, updatedAt: serverTimestamp() }));
+  await batch.commit();
+};
+
+// { 'YYYY-MM-DD': { steps, restingHeartRate, sleepMinutes, source } } from `from` to `to` (inclusive)
+export const loadActivityRange = async (uid, from, to) => {
+  if (!db) {
+    return notConfigured();
+  }
+  const snapshot = await getDocs(query(activityDays(uid), where(documentId(), '>=', from), where(documentId(), '<=', to)));
+  return Object.fromEntries(
+    snapshot.docs.map((day) => {
+      const { steps = null, restingHeartRate = null, sleepMinutes = null, source = null } = day.data();
+      return [day.id, { steps, restingHeartRate, sleepMinutes, source }];
+    })
+  );
+};
+
 // Keep this list in sync with the documents above when new ones are added
 export const deleteUserData = async (uid) => {
   if (!db) {
     return notConfigured();
   }
-  await Promise.all([deleteDoc(questionnaireDoc(uid)), deleteDoc(resultsDoc(uid))]);
+  const [food, activity] = await Promise.all([getDocs(foodDays(uid)), getDocs(activityDays(uid))]);
+  await Promise.all([
+    deleteDoc(questionnaireDoc(uid)),
+    deleteDoc(resultsDoc(uid)),
+    ...food.docs.map((day) => deleteDoc(day.ref)),
+    ...activity.docs.map((day) => deleteDoc(day.ref)),
+  ]);
   await deleteDoc(userDoc(uid));
 };

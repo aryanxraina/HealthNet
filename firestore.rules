@@ -7,6 +7,8 @@ rules_version = '2';
 //   users/{uid}                        profile and settings
 //   users/{uid}/data/questionnaire     questionnaire answers
 //   users/{uid}/results/latest         latest risk scores
+//   users/{uid}/food/{YYYY-MM-DD}      food log, one document per day
+//   users/{uid}/activity/{YYYY-MM-DD}  wearable daily totals (steps, resting heart rate, sleep)
 // Everything else is denied.
 service cloud.firestore {
   match /databases/{database}/documents {

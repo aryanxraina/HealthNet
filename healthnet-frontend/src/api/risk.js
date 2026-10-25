@@ -1,11 +1,9 @@
-import { getIdToken } from '../firebase';
+import { ApiError, apiFetch } from './client';
 import { ageFrom, riskSexOf } from '../questionnaire/answers';
 import { SECTIONS } from '../questionnaire/sections';
 
 // Talks to the HealthNet risk engine (FINAL YEAR PROJECT/risk_api.py).
 // The engine calculates on the fly and stores nothing; results are kept in Firestore by UserDataContext.
-
-const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 // Answers the engine reads (see risk/profile.py). Anything else, such as medications or
 // allergies, never leaves the browser for this request.
@@ -54,34 +52,14 @@ export const sectionForField = (field) => {
   return SECTIONS.find((section) => section.questions.some((question) => question.id === field))?.id ?? 'about';
 };
 
-export class RiskApiError extends Error {
-  constructor(code, status) {
-    super(`Risk engine error: ${code}`);
-    this.code = code; // unavailable | notConfigured | auth | invalid | unknown
-    this.status = status;
-  }
-}
+// Kept under its original name for existing callers
+export const RiskApiError = ApiError;
 
 export const fetchAssessment = async (profile) => {
-  let token;
-  try {
-    token = await getIdToken();
-  } catch {
-    throw new RiskApiError('auth');
+  const data = await apiFetch('/risk/assessment', { method: 'POST', body: profile });
+  // A reply without scores (e.g. from a proxy or an older API) must not reach the Dashboard
+  if (!data || typeof data.scores !== 'object' || data.scores === null) {
+    throw new ApiError('unknown');
   }
-  let response;
-  try {
-    response = await fetch(`${API_URL}/risk/assessment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(profile),
-    });
-  } catch {
-    throw new RiskApiError('unavailable');
-  }
-  if (response.ok) {
-    return response.json();
-  }
-  const code = { 401: 'auth', 422: 'invalid', 503: 'notConfigured' }[response.status] ?? 'unknown';
-  throw new RiskApiError(code, response.status);
+  return data;
 };

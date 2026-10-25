@@ -31,6 +31,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+# Wearable connection tokens (encrypted, but never commit them)
+wearables.sqlite3*
 
 # Misc
 *.swp

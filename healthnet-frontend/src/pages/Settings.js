@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, FileText, Trash2 } from 'lucide-react';
+import { Download, FileText, Loader2, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useUserData } from '../context/UserDataContext';
-import { deleteUserData } from '../firebase';
+import { deleteUserData, loadActivityRange, loadFoodRange } from '../firebase';
+import { disconnectGoogle } from '../api/wearables';
 import { LANGUAGES, useTranslation } from '../i18n';
 import { formatMeasurement } from '../lib/units';
-import ComingSoonBadge from '../components/ComingSoonBadge';
+import { saveFile, todayStamp } from '../lib/saveFile';
+import { useReportDownload } from '../report/useReportDownload';
+import { EnhancedReadingSetting } from '../components/import/EnhancedReading';
 import DataStatusBanner from '../components/DataStatusBanner';
+import DevicesSetting from '../components/devices/DevicesSetting';
 
 const cardClass = 'bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 scroll-mt-20';
 const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2';
@@ -65,23 +69,15 @@ const deleteErrorKey = (code) => {
   }
 };
 
-const downloadJson = (data, filename) => {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-};
+const downloadJson = (data, filename) =>
+  saveFile(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), filename);
 
 const Settings = () => {
   const { user, updateName, resetPassword, reauthenticate, deleteAccount } = useAuth();
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useTranslation();
   const { settings, answers, results, saveStatus, updateSettings } = useUserData();
+  const report = useReportDownload();
   const navigate = useNavigate();
 
   const [name, setName] = useState(user.displayName || '');
@@ -125,7 +121,12 @@ const Settings = () => {
     setResetNotice(t('settings.account.resetSent', { email: user.email }));
   };
 
-  const exportData = () => {
+  const exportData = async () => {
+    // Every logged day ('0000-00-00' to '9999-99-99' covers all date keys)
+    const [food, activity] = await Promise.all([
+      loadFoodRange(user.uid, '0000-00-00', '9999-99-99').catch(() => ({})),
+      loadActivityRange(user.uid, '0000-00-00', '9999-99-99').catch(() => ({})),
+    ]);
     downloadJson(
       {
         exportedAt: new Date().toISOString(),
@@ -134,8 +135,10 @@ const Settings = () => {
         settings,
         questionnaire: answers,
         results,
+        foodLog: food,
+        activity,
       },
-      `healthnet-data-${new Date().toISOString().slice(0, 10)}.json`
+      `healthnet-data-${todayStamp()}.json`
     );
   };
 
@@ -150,6 +153,8 @@ const Settings = () => {
       setDeleting(false);
       return;
     }
+    // End any wearable connection so the server forgets its token (nothing to do when there isn't one)
+    await disconnectGoogle().catch(() => {});
     // Delete saved health data first; if that fails, keep the account so nothing is orphaned
     try {
       await deleteUserData(user.uid);
@@ -324,7 +329,16 @@ const Settings = () => {
               ))}
             </div>
           </fieldset>
+
+          <EnhancedReadingSetting />
         </div>
+      </section>
+
+      {/* Devices */}
+      <section id="devices" className={cardClass}>
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{t('devices.title')}</h2>
+        <p className={`${helpClass} mt-1 mb-4`}>{t('devices.subtitle')}</p>
+        <DevicesSetting />
       </section>
 
       {/* Your data */}
@@ -338,15 +352,19 @@ const Settings = () => {
             </div>
             <button
               type="button"
-              disabled
-              title={t('common.comingSoon')}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg font-medium text-gray-700 dark:text-gray-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={report.download}
+              disabled={report.working || !report.ready}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-60 disabled:cursor-wait"
             >
-              <FileText className="h-4 w-4" aria-hidden="true" />
-              PDF
-              <ComingSoonBadge />
+              {report.working ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileText className="h-4 w-4" aria-hidden="true" />}
+              {report.working ? t('report.preparing') : 'PDF'}
             </button>
           </div>
+          {report.error && (
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              {t(report.error)}
+            </p>
+          )}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <p className="font-medium text-gray-800 dark:text-gray-100">{t('settings.data.json')}</p>

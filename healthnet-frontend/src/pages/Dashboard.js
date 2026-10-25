@@ -1,57 +1,40 @@
-import React, { useMemo } from 'react';
-import { Line } from 'react-chartjs-2';
-import '../chartSetup';
+import React, { useCallback, useState } from 'react';
 import { useAuth, getDisplayName } from '../context/AuthContext';
-import { themedOptions, useChartColors } from '../lib/chartTheme';
 import ComingSoonBadge, { SampleDataBadge } from '../components/ComingSoonBadge';
 import DataStatusBanner from '../components/DataStatusBanner';
+import ActivityTrend from '../components/dashboard/ActivityTrend';
 import RiskOverview from '../components/dashboard/RiskOverview';
 import VitalsTiles from '../components/dashboard/VitalsTiles';
+import ImportReportDialog from '../components/import/ImportReportDialog';
+import PrescriptionDialog from '../components/import/PrescriptionDialog';
+import { useUserData } from '../context/UserDataContext';
 import { useTranslation } from '../i18n';
-
-// Sample readings until real vitals are stored
-const healthTrendData = {
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  datasets: [{
-    label: 'Heart Rate (bpm)',
-    data: [72, 75, 73, 78, 76, 74],
-    borderColor: 'rgb(99, 102, 241)',
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    tension: 0.4
-  }, {
-    label: 'Systolic BP (mmHg)',
-    data: [120, 118, 122, 125, 121, 119],
-    borderColor: 'rgb(239, 68, 68)',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    tension: 0.4
-  }]
-};
-
-const healthTrendOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: 'top',
-    },
-    title: {
-      display: true,
-      text: 'Heart rate and blood pressure (sample)'
-    }
-  },
-  scales: {
-    y: {
-      beginAtZero: false
-    }
-  }
-};
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const firstName = getDisplayName(user).split(' ')[0];
-  const chartColors = useChartColors();
-  const trendOptions = useMemo(() => themedOptions(healthTrendOptions, chartColors), [chartColors]);
+  const { answers, saveAnswers } = useUserData();
+  const [importing, setImporting] = useState(false);
+  const [importedCount, setImportedCount] = useState(0);
+  const [scanning, setScanning] = useState(false);
+  const [addedMedicines, setAddedMedicines] = useState(0);
+  const closeImport = useCallback(() => setImporting(false), []);
+
+  // Values confirmed in the import dialog join the saved Vitals; the risk scores then refresh by themselves
+  const applyImport = (values) => {
+    saveAnswers('vitals', { ...answers.vitals, ...values }).catch(() => {});
+    setImportedCount(Object.keys(values).length);
+    setImporting(false);
+  };
+
+  // Medicines confirmed from a prescription join the Medical history list
+  const applyPrescription = (items) => {
+    const existing = answers.medical?.medicationList || [];
+    saveAnswers('medical', { ...answers.medical, medicationList: [...existing, ...items] }).catch(() => {});
+    setAddedMedicines(items.length);
+    setScanning(false);
+  };
 
   return (
     <div>
@@ -64,25 +47,36 @@ const Dashboard = () => {
             <p className="text-gray-600 dark:text-gray-300">{t('dashboard.welcome', { name: firstName })}</p>
           </div>
           <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
-            <button type="button" disabled title="Coming soon" className="bg-indigo-600 text-white px-4 py-2 rounded-md transition flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button type="button" onClick={() => setImporting(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
-              Upload Report
-              <ComingSoonBadge className="ml-2" />
+              {t('dashboard.uploadReport')}
             </button>
-            <button type="button" disabled title="Coming soon" className="border border-indigo-600 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-md transition flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button type="button" onClick={() => setScanning(true)} className="border border-indigo-600 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 px-4 py-2 rounded-md transition flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
-              Start Scan
-              <ComingSoonBadge className="ml-2" />
+              {t('dashboard.scanPrescription')}
             </button>
           </div>
         </div>
 
         <DataStatusBanner className="mb-6" />
+
+        {importedCount > 0 && (
+          <p role="status" className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+            {t('import.saved', { count: importedCount })}
+          </p>
+        )}
+        {importing && <ImportReportDialog onClose={closeImport} onApply={applyImport} />}
+        {addedMedicines > 0 && (
+          <p role="status" className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+            {t('prescription.saved', { count: addedMedicines })}
+          </p>
+        )}
+        {scanning && <PrescriptionDialog onClose={() => setScanning(false)} onApply={applyPrescription} />}
 
         <div className="mb-6">
           <RiskOverview />
@@ -203,19 +197,15 @@ const Dashboard = () => {
               </button>
             </div>
             
-            {/* Your own readings, plus the trend chart (sample data until readings are tracked over time) */}
+            {/* Your own readings, plus daily activity from a connected wearable */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
               <div className="mb-6">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{t('dashboard.vitals.title')}</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.vitals.subtitle')}</p>
               </div>
               <VitalsTiles />
-              <div className="mt-8 mb-2 flex items-center gap-2">
-                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">{t('dashboard.vitals.trendTitle')}</h3>
-                <SampleDataBadge />
-              </div>
-              <div className="relative h-64">
-                <Line data={healthTrendData} options={trendOptions} />
+              <div className="mt-8">
+                <ActivityTrend />
               </div>
             </div>
           </div>
@@ -226,7 +216,6 @@ const Dashboard = () => {
             <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Quick Actions</h2>
-                <ComingSoonBadge />
               </div>
               <div className="space-y-3">
                 <button type="button" disabled title="Coming soon" className="w-full text-left p-3 border border-gray-200 dark:border-slate-700 rounded-lg transition flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
@@ -234,24 +223,27 @@ const Dashboard = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Schedule Appointment
+                  <ComingSoonBadge className="ml-auto" />
                 </button>
-                <button type="button" disabled title="Coming soon" className="w-full text-left p-3 border border-gray-200 dark:border-slate-700 rounded-lg transition flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
+                <button type="button" onClick={() => setImporting(true)} className="w-full text-left p-3 border border-gray-200 dark:border-slate-700 rounded-lg transition flex items-center hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-slate-800">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  Upload Report
+                  {t('dashboard.uploadReport')}
                 </button>
                 <button type="button" disabled title="Coming soon" className="w-full text-left p-3 border border-gray-200 dark:border-slate-700 rounded-lg transition flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Get Health Tips
+                  <ComingSoonBadge className="ml-auto" />
                 </button>
                 <button type="button" disabled title="Coming soon" className="w-full text-left p-3 border border-gray-200 dark:border-slate-700 rounded-lg transition flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                   Contact Support
+                  <ComingSoonBadge className="ml-auto" />
                 </button>
               </div>
             </div>

@@ -5,7 +5,7 @@ import { riskSexOf } from './answers';
 // and the risk engine reads answers by these ids, so rename ids with care.
 //
 // Question fields:
-//   type      choice | multi | number | date | country | text | textarea
+//   type      choice | multi | number | date | country | text | textarea | medicationList
 //   options   allowed values (labels: questionnaire.options.<id>.<value>, or optionSets.<optionSet>.<value>)
 //   kind      unit kind for numbers stored in standard units (see lib/units.js); `unit` is a fixed label instead
 //   min/max   allowed range in standard units
@@ -96,6 +96,8 @@ export const SECTIONS = [
       { id: 'familyDiabetes', type: 'choice', options: ['no', 'extended', 'immediate'], required: true },
       { id: 'parentsHypertension', type: 'choice', options: ['none', 'one', 'both', 'unsure'], required: true },
       { id: 'pregnancies', type: 'number', unit: '', min: 0, max: 20, integer: true, help: true, showIf: isWoman },
+      // Structured list, filled by typing or from a prescription (components/questionnaire/MedicationList.js)
+      { id: 'medicationList', type: 'medicationList', help: true },
       { id: 'medications', type: 'textarea' },
       { id: 'allergies', type: 'textarea' },
     ],

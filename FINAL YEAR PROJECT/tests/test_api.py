@@ -80,6 +80,10 @@ def test_accepts_valid_tokens(monkeypatch):
     assert response.status_code == 200
 
 
+def test_root_shows_status():
+    assert TestClient(app).get("/").json() == {"service": "HealthNet API", "status": "ok", "docs": "/docs"}
+
+
 def test_unconfigured_server_says_so(monkeypatch):
     monkeypatch.delenv("FIREBASE_PROJECT_ID", raising=False)
     response = TestClient(app).post("/risk/assessment", json=PROFILE, headers={"Authorization": "Bearer t"})

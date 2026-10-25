@@ -4,6 +4,7 @@ import { useTranslation } from '../../i18n';
 import { countryOptions } from '../../questionnaire/countries';
 import { todayIso } from '../../questionnaire/progress';
 import { cmToFeetInches, feetInchesToCm, formatMeasurement, fromStandard, toStandard, unitFor } from '../../lib/units';
+import MedicationList from './MedicationList';
 
 // Renders one question from questionnaire/sections.js. Values are kept in standard units;
 // number fields convert to and from the user's preferred units as they type.
@@ -313,6 +314,12 @@ const QuestionField = ({ question, sectionId, value, onChange, error, units, opt
             aria-describedby={describedById}
             className={`${inputClass} max-w-xs ${invalid ? invalidClass : ''}`}
           />
+        </FieldShell>
+      );
+    case 'medicationList':
+      return (
+        <FieldShell {...shell}>
+          <MedicationList value={value} onChange={onChange} />
         </FieldShell>
       );
     case 'country':

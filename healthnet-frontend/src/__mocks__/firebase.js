@@ -80,6 +80,26 @@ export const saveResults = async (uid, results) => {
   store[uid] = { ...store[uid], results };
 };
 
+export const loadFoodDay = async (uid, date) => store[uid]?.food?.[date] ?? {};
+
+export const saveFoodDay = async (uid, date, meals) => {
+  store[uid] = { ...store[uid], food: { ...store[uid]?.food, [date]: meals } };
+};
+
+export const loadFoodRange = async (uid, from, to) =>
+  Object.fromEntries(Object.entries(store[uid]?.food ?? {}).filter(([date]) => date >= from && date <= to));
+
+export const saveActivityDays = async (uid, days, source) => {
+  const activity = { ...store[uid]?.activity };
+  days.forEach(({ date, ...values }) => {
+    activity[date] = { ...values, source };
+  });
+  store[uid] = { ...store[uid], activity };
+};
+
+export const loadActivityRange = async (uid, from, to) =>
+  Object.fromEntries(Object.entries(store[uid]?.activity ?? {}).filter(([date]) => date >= from && date <= to));
+
 export const deleteUserData = async (uid) => {
   delete store[uid];
 };

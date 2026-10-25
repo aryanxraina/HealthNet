@@ -6,6 +6,13 @@ numpy>=2.0
 google-auth>=2.40
 requests>=2.32
 cachecontrol>=0.14
+# File uploads (Enhanced reading)
+python-multipart>=0.0.20
+# Wearable sync: encrypts stored device tokens
+cryptography>=44
+# Optional cloud "Enhanced reading" providers; only imported when EXTRACTION_PROVIDER selects them
+anthropic>=2.3
+google-genai>=2.33
 # Pinned on purpose: diabetes_model.pkl only loads reliably with the scikit-learn
 # version that trained it. If you change this, re-run train_diabetes_model.py.
 scikit-learn==1.8.0

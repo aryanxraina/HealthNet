@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Lock, Minus, Sparkles } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, FileUp, Lock, Minus, Sparkles } from 'lucide-react';
 import { useUserData } from '../context/UserDataContext';
 import { useTranslation } from '../i18n';
 import DataStatusBanner from '../components/DataStatusBanner';
+import ImportReportDialog from '../components/import/ImportReportDialog';
 import QuestionField from '../components/questionnaire/QuestionField';
 import ProgressTracker, { SectionNav } from '../components/questionnaire/ProgressTracker';
 import { isAnswered } from '../questionnaire/answers';
@@ -221,6 +222,9 @@ const Questionnaire = () => {
   const [draft, setDraft] = useState({});
   const [errors, setErrors] = useState({});
   const [unlocked, setUnlocked] = useState([]);
+  const [importing, setImporting] = useState(false);
+  // Bumped after an import so the number fields show the imported values
+  const [importVersion, setImportVersion] = useState(0);
   const dirty = useRef(false);
   const readyAtEntry = useRef([]);
   const stepChanged = useRef(false);
@@ -454,6 +458,16 @@ const Questionnaire = () => {
                       </div>
                     </div>
                     <UnlockChips sectionId={section.id} answers={merged} />
+                    {section.id === 'vitals' && (
+                      <button
+                        type="button"
+                        onClick={() => setImporting(true)}
+                        className="mt-5 inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-950/70"
+                      >
+                        <FileUp className="h-4 w-4" aria-hidden="true" />
+                        {t('import.button')}
+                      </button>
+                    )}
                   </div>
 
                   <div className="space-y-8 p-6 sm:p-8">
@@ -468,7 +482,7 @@ const Questionnaire = () => {
                     )}
                     {visibleQuestions(section, merged).map((question) => (
                       <QuestionField
-                        key={question.type === 'number' ? `${question.id}-${unitsKey}` : question.id}
+                        key={question.type === 'number' ? `${question.id}-${unitsKey}-${importVersion}` : question.id}
                         question={question}
                         sectionId={section.id}
                         value={draft[question.id]}
@@ -506,6 +520,17 @@ const Questionnaire = () => {
           </div>
         )}
       </div>
+
+      {importing && (
+        <ImportReportDialog
+          onClose={() => setImporting(false)}
+          onApply={(values) => {
+            Object.entries(values).forEach(([field, value]) => setField(field, value));
+            setImportVersion((version) => version + 1);
+            setImporting(false);
+          }}
+        />
+      )}
 
       {unlocked.length > 0 && (
         <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">

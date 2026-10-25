@@ -66,6 +66,11 @@ describe('fetchAssessment', () => {
     await expect(fetchAssessment({})).rejects.toMatchObject({ code });
   });
 
+  test('rejects a reply without scores', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ matches: [] }) });
+    await expect(fetchAssessment({})).rejects.toMatchObject({ code: 'unknown' });
+  });
+
   test('reports an unreachable API', async () => {
     global.fetch = jest.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     const error = await fetchAssessment({}).catch((e) => e);

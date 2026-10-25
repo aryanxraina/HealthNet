@@ -10,6 +10,11 @@ export const DEFAULT_SETTINGS = {
   theme: 'system',
   language: 'en',
   diabetesModel: 'findrisc',
+  // Cloud reading of documents is opt-in
+  enhancedReading: false,
+  calorieGoal: 2000,
+  // 'google' while a wearable is connected, so the Dashboard only asks the server when there's something to sync
+  connectedDevice: null,
 };
 
 const EMPTY_STATE = { status: 'idle', settings: DEFAULT_SETTINGS, answers: {}, results: null, error: null };
