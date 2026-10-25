@@ -100,7 +100,7 @@
       "womenOnly": "Women only",
       "edit": "Edit",
       "goDashboard": "See my Dashboard",
-      "dashboardNote": "Your scores appear on the Dashboard once the risk engine is connected."
+      "dashboardNote": "Your scores are calculated on the Dashboard and update when you change an answer."
     },
     "scores": {
       "bodyComposition": "BMI & waist-to-height",
@@ -267,6 +267,206 @@
         "dataNotDeleted": "Your saved data couldn't be deleted, so your account was kept. Please try again.",
         "generic": "Something went wrong ({{code}}). Please try again."
       }
+    }
+  },
+  "dashboard": {
+    "title": "Health Dashboard",
+    "welcome": "Welcome back, {{name}}! Here is what your answers say about your health.",
+    "risk": {
+      "title": "Your health risk scores",
+      "subtitle": "Calculated from your questionnaire answers with published, validated risk models.",
+      "updated": "Updated {{date}}",
+      "calculating": "Calculating your scores…",
+      "recalculate": "Recalculate",
+      "groups": {
+        "heart": "Heart & blood pressure",
+        "metabolic": "Diabetes & weight",
+        "wellbeing": "Mind, sleep & alcohol"
+      },
+      "empty": {
+        "title": "Your scores will appear here",
+        "body": "Answer the health questionnaire and HealthNet will estimate your heart, blood pressure and diabetes risk, plus quick checks for mood, sleep and alcohol.",
+        "action": "Start the questionnaire"
+      },
+      "errors": {
+        "unavailable": "Couldn't reach the HealthNet risk service. Make sure the API is running (python main.py in FINAL YEAR PROJECT) and try again.",
+        "notConfigured": "The risk service isn't ready to check sign-ins yet. Set FIREBASE_PROJECT_ID for the API and restart it.",
+        "auth": "Your sign-in could not be confirmed. Please sign out and sign in again.",
+        "invalid": "Some of your answers could not be used. Please review the questionnaire.",
+        "unknown": "Something went wrong while calculating your scores."
+      },
+      "horizon": "{{years}}-year risk",
+      "pointsOf": "out of {{max}}",
+      "unlock": "Add {{fields}} to unlock",
+      "unlockMore": "Add {{fields}} and {{count}} more to unlock",
+      "addAnswers": "Add answers",
+      "reviewAnswers": "Review answers",
+      "howCalculated": "How this is calculated",
+      "variants": {
+        "lab": "Using your cholesterol result",
+        "nonlab": "Without blood tests (uses BMI)",
+        "base": "Base model",
+        "hba1c": "Including your HbA1c"
+      },
+      "whoRegion": "Calibrated for your region of the world",
+      "preventDetails": "Heart attack & stroke {{ascvd}}% · Heart failure {{hf}}%",
+      "preventThirty": "30-year risk of any heart disease: {{value}}%",
+      "framinghamDetails": "Within 1 year {{one}}% · 2 years {{two}}%",
+      "framinghamOptimal": "Someone your age with ideal blood pressure and weight: {{value}}%",
+      "findriscRisk": "About {{risk}} people with this score develop type 2 diabetes within 10 years",
+      "phqDetails": "Anxiety {{anxiety}}/6 · Low mood {{depression}}/6",
+      "waistToHeight": "Waist-to-height ratio {{ratio}} ({{category}})",
+      "waistCategories": {
+        "healthy": "healthy",
+        "increased": "increased risk",
+        "high": "high risk"
+      },
+      "diabetesModel": {
+        "label": "Diabetes model",
+        "findrisc": "FINDRISC",
+        "ml": "ML (experimental)",
+        "experimentalNote": "Experimental: trained on one population of women, with some inputs estimated. Use FINDRISC for a validated score."
+      },
+      "reasons": {
+        "ageRange": "Available for ages {{min}}–{{max}}.",
+        "existingCvd": "Not used for people who already have heart disease or have had a stroke; your doctor will assess your risk directly.",
+        "unknownCountry": "We don't have regional data for your country yet.",
+        "outOfRange": "Your {{field}} is outside the range this model was built for ({{min}}–{{max}}).",
+        "alreadyHypertension": "You already have high blood pressure or take medicine for it, so this score doesn’t apply.",
+        "highReading": "Your blood pressure reading is already at or above {{systolic}}/{{diastolic}}. Please talk to a doctor or nurse.",
+        "diabetes": "This score is for people without diabetes.",
+        "adultsOnly": "For adults aged 18 and over.",
+        "alreadyDiabetes": "You already have diabetes, so this risk score doesn’t apply.",
+        "womenOnly": "Only available for women, because the model was trained on data from women.",
+        "ageMin": "Available from age {{min}}."
+      },
+      "rangeFields": {
+        "totalCholesterol": "total cholesterol",
+        "hdlCholesterol": "HDL cholesterol",
+        "systolic": "blood pressure",
+        "bmi": "BMI",
+        "egfr": "eGFR",
+        "hba1c": "HbA1c"
+      },
+      "assumptions": {
+        "diabetesFromLabs": "Counted as diabetes because your HbA1c or fasting glucose is in the diabetes range.",
+        "statinAssumedNo": "You weren’t sure about statins, so we assumed you don’t take one.",
+        "parentsAssumedNone": "You weren’t sure about your parents’ blood pressure, so we assumed neither has it.",
+        "fastingGlucoseForOgtt": "Uses fasting glucose where the model expects a 2-hour glucose test.",
+        "skinInsulinImputed": "Skin thickness and insulin are filled in with typical values.",
+        "pedigreeFromFamilyHistory": "Family history is estimated from your answer."
+      },
+      "fields": {
+        "age": "date of birth",
+        "sex": "sex",
+        "country": "country",
+        "height": "height",
+        "weight": "weight",
+        "waist": "waist size",
+        "neck": "neck size",
+        "smoking": "smoking",
+        "dailyActivity": "daily activity",
+        "fruitVeg": "fruit & vegetables",
+        "auditFrequency": "alcohol",
+        "auditTypical": "drinks per day",
+        "auditBinge": "heavy drinking",
+        "conditions": "medical conditions",
+        "bpMedication": "blood pressure medicine",
+        "statin": "statin use",
+        "highGlucoseHistory": "blood sugar history",
+        "familyDiabetes": "family diabetes",
+        "parentsHypertension": "parents’ blood pressure",
+        "pregnancies": "pregnancies",
+        "systolic": "blood pressure",
+        "diastolic": "blood pressure (bottom number)",
+        "fastingGlucose": "fasting glucose",
+        "hba1c": "HbA1c",
+        "totalCholesterol": "total cholesterol",
+        "hdlCholesterol": "HDL cholesterol",
+        "egfr": "kidney function (eGFR or creatinine)",
+        "phq1": "mood questions",
+        "phq2": "mood questions",
+        "phq3": "mood questions",
+        "phq4": "mood questions",
+        "snoring": "snoring",
+        "tired": "tiredness",
+        "observedApnea": "breathing pauses"
+      },
+      "categories": {
+        "whoCvd": {
+          "lt5": "Under 5%",
+          "5to10": "5–10%",
+          "10to20": "10–20%",
+          "20to30": "20–30%",
+          "gte30": "30% or more"
+        },
+        "prevent": {
+          "lt5": "Under 5%",
+          "5to10": "5–10%",
+          "10to20": "10–20%",
+          "20to30": "20–30%",
+          "gte30": "30% or more"
+        },
+        "framinghamHtn": {
+          "low": "Low",
+          "moderate": "Moderate",
+          "high": "High"
+        },
+        "findrisc": {
+          "low": "Low",
+          "slightlyElevated": "Slightly raised",
+          "moderate": "Moderate",
+          "high": "High",
+          "veryHigh": "Very high"
+        },
+        "mlDiabetes": {
+          "low": "Low",
+          "moderate": "Moderate",
+          "high": "High",
+          "veryHigh": "Very high"
+        },
+        "phq4": {
+          "normal": "Normal",
+          "mild": "Mild",
+          "moderate": "Moderate",
+          "severe": "Severe"
+        },
+        "stopBang": {
+          "low": "Low risk",
+          "intermediate": "Intermediate risk",
+          "high": "High risk"
+        },
+        "auditC": {
+          "negative": "Low risk",
+          "positive": "Above the safe limit"
+        },
+        "bodyComposition": {
+          "underweight": "Underweight",
+          "healthy": "Healthy weight",
+          "overweight": "Overweight",
+          "obese1": "Obesity (class 1)",
+          "obese2": "Obesity (class 2)",
+          "obese3": "Obesity (class 3)"
+        }
+      },
+      "support": {
+        "title": "You don’t have to handle this alone",
+        "body": "Your answers suggest you may be dealing with anxiety or low mood. Talking to a doctor, counsellor or someone you trust can really help.",
+        "helplines": "Find a free, confidential helpline in your country",
+        "emergency": "If you are in danger or thinking about harming yourself, call your local emergency number now."
+      },
+      "disclaimer": "These are educational estimates from published risk models, not a diagnosis. Talk to a doctor or nurse about your results before making health decisions."
+    },
+    "vitals": {
+      "title": "Your latest readings",
+      "subtitle": "From the Vitals & lab values section of your questionnaire.",
+      "heartRate": "Resting heart rate",
+      "bloodPressure": "Blood pressure",
+      "glucose": "Fasting glucose",
+      "temperature": "Temperature",
+      "notAdded": "Not added",
+      "add": "Add readings",
+      "trendTitle": "Trends over time"
     }
   }
 }

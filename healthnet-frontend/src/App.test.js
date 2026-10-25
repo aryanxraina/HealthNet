@@ -226,3 +226,112 @@ test('deleting the account removes saved data and signs out', async () => {
   expect(await screen.findByRole('link', { name: /sign in/i })).toBeInTheDocument();
   expect(__getMockStore()['test-user']).toBeUndefined();
 });
+
+// ---- Dashboard risk scores ----
+
+const fixture = require('./api/__fixtures__/assessment.json');
+
+const yearsAgo = (years) => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - years);
+  date.setMonth(date.getMonth() - 1);
+  return date.toISOString().slice(0, 10);
+};
+
+const dashboardAnswers = () => ({
+  about: { dateOfBirth: yearsAgo(50), gender: 'female', country: 'IN', height: 160, weight: 68, waist: 86, neck: 34, _status: 'complete' },
+  lifestyle: { smoking: 'never', dailyActivity: 'no', fruitVeg: 'yes', auditFrequency: 'never' },
+  medical: { conditions: ['none'], bpMedication: 'no', statin: 'no', medications: 'Metformin' },
+  vitals: { systolic: 128, diastolic: 82, fastingGlucose: 104 },
+  mental: { phq1: '2', phq2: '2', phq3: '1', phq4: '0' },
+});
+
+const mockApi = (response = fixture.response) => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => response });
+};
+
+afterEach(() => {
+  delete global.fetch;
+});
+
+test('the dashboard invites people with no answers to the questionnaire', async () => {
+  mockApi();
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+
+  expect(await screen.findByText('Your scores will appear here')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Start the questionnaire' })).toHaveAttribute('href', '/questionnaire');
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('the dashboard shows real scores and saves them', async () => {
+  mockApi();
+  __getMockStore()['test-user'] = { answers: dashboardAnswers() };
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+
+  const who = await screen.findByRole('article', { name: 'Heart attack & stroke risk (WHO)' });
+  expect(within(who).getByText('3.2')).toBeInTheDocument();
+  expect(within(who).getByText('Under 5%')).toBeInTheDocument();
+  expect(within(who).getByText('Without blood tests (uses BMI)')).toBeInTheDocument();
+
+  // PREVENT needs lab results: says what to add and links to that section
+  const prevent = screen.getByRole('article', { name: 'Heart disease risk (AHA PREVENT)' });
+  expect(within(prevent).getByText(/add total cholesterol, hdl cholesterol and 1 more to unlock/i)).toBeInTheDocument();
+  expect(within(prevent).getByRole('link', { name: /add answers/i })).toHaveAttribute('href', '/questionnaire#vitals');
+
+  // Positive anxiety screen shows where to get help
+  expect(screen.getByRole('link', { name: /find a free, confidential helpline/i })).toHaveAttribute('href', 'https://findahelpline.com');
+
+  const [, request] = global.fetch.mock.calls[0];
+  expect(request.headers.Authorization).toBe('Bearer test-token');
+  expect(request.body).not.toMatch(/Metformin/);
+  await waitFor(() => expect(__getMockStore()['test-user'].results.scores.whoCvd.value).toBe(3.2));
+});
+
+test('saved scores are reused while the answers are unchanged', async () => {
+  mockApi();
+  const answers = dashboardAnswers();
+  const { buildProfile, profileKey } = require('./api/risk');
+  __getMockStore()['test-user'] = {
+    answers,
+    results: { ...fixture.response, profileKey: profileKey(buildProfile(answers)), calculatedAt: '2026-10-20T10:00:00Z' },
+  };
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+
+  expect(await screen.findByRole('article', { name: 'Type 2 diabetes risk (FINDRISC)' })).toBeInTheDocument();
+  expect(screen.getByText(/updated/i)).toHaveTextContent('Oct 20, 2026');
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('the diabetes card switches between FINDRISC and the experimental model', async () => {
+  mockApi();
+  __getMockStore()['test-user'] = { answers: dashboardAnswers() };
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+
+  const findrisc = await screen.findByRole('article', { name: 'Type 2 diabetes risk (FINDRISC)' });
+  expect(within(findrisc).getByText('13')).toBeInTheDocument();
+
+  fireEvent.click(within(findrisc).getByRole('radio', { name: 'ML (experimental)' }));
+
+  const ml = await screen.findByRole('article', { name: 'Diabetes estimate (experimental)' });
+  expect(within(ml).getByText(/trained on one population of women/i)).toBeInTheDocument();
+  expect(within(ml).getByText('11.9')).toBeInTheDocument();
+  await waitFor(() => expect(__getMockStore()['test-user'].settings.diabetesModel).toBe('ml'));
+});
+
+test('the dashboard explains when the risk service is unreachable', async () => {
+  global.fetch = jest.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+  __getMockStore()['test-user'] = { answers: dashboardAnswers() };
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+
+  expect(await screen.findByText(/couldn't reach the healthnet risk service/i)).toBeInTheDocument();
+  global.fetch.mockResolvedValue({ ok: true, json: async () => fixture.response });
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+  expect(await screen.findByRole('article', { name: 'Heart attack & stroke risk (WHO)' })).toBeInTheDocument();
+  expect(global.fetch).toHaveBeenCalledTimes(2);
+});

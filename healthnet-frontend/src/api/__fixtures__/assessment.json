@@ -1,0 +1,222 @@
+{
+ "profile": {
+  "age": 50,
+  "sex": "female",
+  "country": "IN",
+  "height": 160,
+  "weight": 68,
+  "waist": 86,
+  "neck": 34,
+  "smoking": "never",
+  "dailyActivity": "no",
+  "fruitVeg": "yes",
+  "auditFrequency": "never",
+  "conditions": [
+   "none"
+  ],
+  "bpMedication": "no",
+  "statin": "no",
+  "highGlucoseHistory": "no",
+  "familyDiabetes": "immediate",
+  "parentsHypertension": "one",
+  "pregnancies": 2,
+  "systolic": 128,
+  "diastolic": 82,
+  "fastingGlucose": 104,
+  "phq1": 2,
+  "phq2": 2,
+  "phq3": 1,
+  "phq4": 0,
+  "snoring": "no",
+  "tired": "yes",
+  "observedApnea": "no"
+ },
+ "response": {
+  "engineVersion": "1.0.0",
+  "scores": {
+   "bodyComposition": {
+    "status": "ok",
+    "value": 26.6,
+    "unit": "kg/m\u00b2",
+    "category": "overweight",
+    "level": 1,
+    "details": {
+     "bmi": 26.6,
+     "waistToHeight": 0.54,
+     "waistToHeightCategory": "increased"
+    },
+    "assumptions": [],
+    "model": {
+     "id": "bodyComposition",
+     "name": "BMI and waist-to-height ratio",
+     "reference": "WHO; NICE NG246 (2023)"
+    }
+   },
+   "whoCvd": {
+    "status": "ok",
+    "value": 3.2,
+    "unit": "%",
+    "category": "lt5",
+    "level": 0,
+    "details": {
+     "variant": "nonlab",
+     "region": "south_asia",
+     "horizonYears": 10,
+     "calibrationYear": 2017
+    },
+    "assumptions": [],
+    "model": {
+     "id": "whoCvd",
+     "name": "WHO CVD risk charts (2019)",
+     "reference": "Kaptoge S et al. Lancet Glob Health 2019;7:e1332-45"
+    }
+   },
+   "prevent": {
+    "status": "needs_input",
+    "missing": [
+     "totalCholesterol",
+     "hdlCholesterol",
+     "egfr"
+    ],
+    "model": {
+     "id": "prevent",
+     "name": "AHA PREVENT equations",
+     "reference": "Khan SS et al. Circulation 2024;149:430-449"
+    }
+   },
+   "framinghamHtn": {
+    "status": "ok",
+    "value": 27.3,
+    "unit": "%",
+    "category": "high",
+    "level": 4,
+    "details": {
+     "horizonYears": 4,
+     "oneYear": 6.3,
+     "twoYear": 13.5,
+     "fourYear": 27.3,
+     "optimalFourYear": 3.6
+    },
+    "assumptions": [],
+    "model": {
+     "id": "framinghamHtn",
+     "name": "Framingham hypertension risk score",
+     "reference": "Parikh NI et al. Ann Intern Med 2008;148:102-110"
+    }
+   },
+   "findrisc": {
+    "status": "ok",
+    "value": 13,
+    "unit": "points",
+    "category": "moderate",
+    "level": 2,
+    "details": {
+     "maxPoints": 26,
+     "points": {
+      "age": 2,
+      "bmi": 1,
+      "waist": 3,
+      "activity": 2,
+      "fruitVeg": 0,
+      "bpMedication": 0,
+      "highGlucose": 0,
+      "family": 5
+     },
+     "tenYearRisk": "1 in 6",
+     "horizonYears": 10
+    },
+    "assumptions": [],
+    "model": {
+     "id": "findrisc",
+     "name": "FINDRISC (Finnish Diabetes Risk Score)",
+     "reference": "Lindstr\u00f6m J, Tuomilehto J. Diabetes Care 2003;26:725-731"
+    }
+   },
+   "mlDiabetes": {
+    "status": "ok",
+    "value": 11.9,
+    "unit": "%",
+    "category": "low",
+    "level": 0,
+    "details": {
+     "experimental": true
+    },
+    "assumptions": [
+     "fastingGlucoseForOgtt",
+     "skinInsulinImputed",
+     "pedigreeFromFamilyHistory"
+    ],
+    "model": {
+     "id": "mlDiabetes",
+     "name": "HealthNet experimental model (logistic regression, Pima dataset)",
+     "reference": "Smith JW et al. Proc Annu Symp Comput Appl Med Care 1988:261-265 (dataset)",
+     "experimental": true
+    }
+   },
+   "phq4": {
+    "status": "ok",
+    "value": 5,
+    "unit": "points",
+    "category": "mild",
+    "level": 1,
+    "details": {
+     "maxPoints": 12,
+     "anxiety": 4,
+     "depression": 1,
+     "anxietyPositive": true,
+     "depressionPositive": false
+    },
+    "assumptions": [],
+    "model": {
+     "id": "phq4",
+     "name": "PHQ-4",
+     "reference": "Kroenke K et al. Psychosomatics 2009;50:613-621"
+    }
+   },
+   "stopBang": {
+    "status": "ok",
+    "value": 1,
+    "unit": "points",
+    "category": "low",
+    "level": 0,
+    "details": {
+     "maxPoints": 8,
+     "items": {
+      "snoring": false,
+      "tired": true,
+      "observed": false,
+      "pressure": false,
+      "bmi": false,
+      "age": false,
+      "neck": false,
+      "male": false
+     }
+    },
+    "assumptions": [],
+    "model": {
+     "id": "stopBang",
+     "name": "STOP-Bang",
+     "reference": "Chung F et al. Chest 2016;149:631-638"
+    }
+   },
+   "auditC": {
+    "status": "ok",
+    "value": 0,
+    "unit": "points",
+    "category": "negative",
+    "level": 0,
+    "details": {
+     "maxPoints": 12,
+     "cutOff": 3
+    },
+    "assumptions": [],
+    "model": {
+     "id": "auditC",
+     "name": "AUDIT-C",
+     "reference": "Bush K et al. Arch Intern Med 1998;158:1789-1795"
+    }
+   }
+  },
+  "disclaimer": "These are educational estimates from published risk models, not a diagnosis. Talk to a doctor or nurse about your results before making health decisions."
+ }
+}

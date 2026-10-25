@@ -4,6 +4,10 @@ import '../chartSetup';
 import { useAuth, getDisplayName } from '../context/AuthContext';
 import { themedOptions, useChartColors } from '../lib/chartTheme';
 import ComingSoonBadge, { SampleDataBadge } from '../components/ComingSoonBadge';
+import DataStatusBanner from '../components/DataStatusBanner';
+import RiskOverview from '../components/dashboard/RiskOverview';
+import VitalsTiles from '../components/dashboard/VitalsTiles';
+import { useTranslation } from '../i18n';
 
 // Sample readings until real vitals are stored
 const healthTrendData = {
@@ -32,7 +36,7 @@ const healthTrendOptions = {
     },
     title: {
       display: true,
-      text: 'Health Trends (Last 6 Months)'
+      text: 'Heart rate and blood pressure (sample)'
     }
   },
   scales: {
@@ -44,6 +48,7 @@ const healthTrendOptions = {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const firstName = getDisplayName(user).split(' ')[0];
   const chartColors = useChartColors();
   const trendOptions = useMemo(() => themedOptions(healthTrendOptions, chartColors), [chartColors]);
@@ -55,10 +60,10 @@ const Dashboard = () => {
         {/* Dashboard Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">Health Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-300">Welcome back, {firstName}! Your dashboard shows sample data until you add your own.</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">{t('dashboard.title')}</h1>
+            <p className="text-gray-600 dark:text-gray-300">{t('dashboard.welcome', { name: firstName })}</p>
           </div>
-          <div className="flex space-x-3 mt-4 md:mt-0">
+          <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
             <button type="button" disabled title="Coming soon" className="bg-indigo-600 text-white px-4 py-2 rounded-md transition flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -77,117 +82,16 @@ const Dashboard = () => {
           </div>
         </div>
 
+        <DataStatusBanner className="mb-6" />
+
+        <div className="mb-6">
+          <RiskOverview />
+        </div>
+
         {/* Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* AI Health Risk Summary */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">AI Health Risk Assessment</h2>
-                <SampleDataBadge />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gradient-to-r from-green-50 dark:from-green-950/40 to-green-100 dark:to-green-900/30 p-4 rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Overall Health Score</span>
-                    <span className="text-sm font-medium text-green-600 dark:text-green-400">Good</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">82</div>
-                    <div className="ml-2 text-sm text-green-600 dark:text-green-400">/ 100</div>
-                  </div>
-                  <div className="mt-2 w-full bg-white dark:bg-slate-900 rounded-full h-2.5">
-                    <div className="bg-green-500 h-2.5 rounded-full" style={{width: '82%'}}></div>
-                  </div>
-                </div>
-                
-                <div className="bg-gradient-to-r from-blue-50 dark:from-blue-950/40 to-blue-100 dark:to-blue-900/30 p-4 rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Metabolic Health</span>
-                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Excellent</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">91</div>
-                    <div className="ml-2 text-sm text-blue-600 dark:text-blue-400">/ 100</div>
-                  </div>
-                  <div className="mt-2 w-full bg-white dark:bg-slate-900 rounded-full h-2.5">
-                    <div className="bg-blue-500 h-2.5 rounded-full" style={{width: '91%'}}></div>
-                  </div>
-                </div>
-                
-                <div className="bg-gradient-to-r from-purple-50 dark:from-purple-950/40 to-purple-100 dark:to-purple-900/30 p-4 rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Cardiovascular Health</span>
-                    <span className="text-sm font-medium text-purple-600 dark:text-purple-400">Good</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">78</div>
-                    <div className="ml-2 text-sm text-purple-600 dark:text-purple-400">/ 100</div>
-                  </div>
-                  <div className="mt-2 w-full bg-white dark:bg-slate-900 rounded-full h-2.5">
-                    <div className="bg-purple-500 h-2.5 rounded-full" style={{width: '78%'}}></div>
-                  </div>
-                </div>
-              </div>
-              
-              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Health Risk Factors</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Diabetes Risk</span>
-                    <span className="text-sm font-medium text-green-600 dark:text-green-400">Low (12%)</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5">
-                    <div className="bg-green-500 h-2.5 rounded-full" style={{width: '12%'}}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Cardiovascular Risk</span>
-                    <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Moderate (35%)</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5">
-                    <div className="bg-yellow-500 h-2.5 rounded-full" style={{width: '35%'}}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Hypertension Risk</span>
-                    <span className="text-sm font-medium text-red-600 dark:text-red-400">High (68%)</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5">
-                    <div className="bg-red-500 h-2.5 rounded-full" style={{width: '68%'}}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Obesity Risk</span>
-                    <span className="text-sm font-medium text-green-600 dark:text-green-400">Low (8%)</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5">
-                    <div className="bg-green-500 h-2.5 rounded-full" style={{width: '8%'}}></div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg border border-indigo-100 dark:border-indigo-900">
-                <div className="flex">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="ml-3">
-                    <h4 className="text-sm font-medium text-indigo-800 dark:text-indigo-200">AI-Powered Recommendation</h4>
-                    <p className="text-sm text-indigo-600 dark:text-indigo-400">Consider lifestyle modifications to reduce your hypertension risk. Regular monitoring of blood pressure is recommended.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
             {/* Latest Report Preview */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
               <div className="flex justify-between items-center mb-6">
@@ -299,36 +203,17 @@ const Dashboard = () => {
               </button>
             </div>
             
-            {/* Real-time Vitals */}
+            {/* Your own readings, plus the trend chart (sample data until readings are tracked over time) */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Health Metrics</h2>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{t('dashboard.vitals.title')}</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.vitals.subtitle')}</p>
+              </div>
+              <VitalsTiles />
+              <div className="mt-8 mb-2 flex items-center gap-2">
+                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">{t('dashboard.vitals.trendTitle')}</h3>
                 <SampleDataBadge />
               </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="text-center p-4 bg-gray-50 dark:bg-slate-800/60 rounded-lg">
-                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">72</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">Heart Rate</div>
-                  <div className="text-xs text-green-600 dark:text-green-400">Normal</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-slate-800/60 rounded-lg">
-                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">120/80</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">Blood Pressure</div>
-                  <div className="text-xs text-green-600 dark:text-green-400">Normal</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-slate-800/60 rounded-lg">
-                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">95</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">Glucose (mg/dL)</div>
-                  <div className="text-xs text-green-600 dark:text-green-400">Normal</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-slate-800/60 rounded-lg">
-                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">98.6</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">Temperature (°F)</div>
-                  <div className="text-xs text-green-600 dark:text-green-400">Normal</div>
-                </div>
-              </div>
-              
               <div className="relative h-64">
                 <Line data={healthTrendData} options={trendOptions} />
               </div>
