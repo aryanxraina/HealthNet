@@ -292,9 +292,7 @@
         "action": "Start the questionnaire"
       },
       "errors": {
-        "unavailable": "Couldn't reach the HealthNet risk service. Make sure the API is running (python main.py in FINAL YEAR PROJECT) and try again.",
-        "notConfigured": "The risk service isn't ready to check sign-ins yet. Set FIREBASE_PROJECT_ID for the API and restart it.",
-        "auth": "Your sign-in could not be confirmed. Please sign out and sign in again.",
+        "loadFailed": "Couldn't load the score calculator. Check your connection and reload the page.",
         "invalid": "Some of your answers could not be used. Please review the questionnaire.",
         "unknown": "Something went wrong while calculating your scores."
       },
@@ -612,6 +610,7 @@
     "lowConfidence": "Please check",
     "notes": {
       "unitGuessed": "No unit was printed, so we assumed {{unit}}.",
+      "nameGuessed": "We didn't recognise this test's name exactly, so please check it's the right test.",
       "notFasting": "Check that this was a fasting test.",
       "approximate": "The report shows a limit rather than an exact value.",
       "outOfRange": "This is outside the expected range. It may have been misread."

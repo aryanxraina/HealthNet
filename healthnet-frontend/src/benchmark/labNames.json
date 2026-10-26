@@ -1,0 +1,89 @@
+{
+  "totalCholesterol": [
+    "Total Cholesterol",
+    "Cholesterol, Total",
+    "CHOLESTEROL TOTAL",
+    "Serum Cholesterol",
+    "S. Cholesterol",
+    "Cholesterol",
+    "Total Cholesterol (TC)",
+    "Cholesterol - Total",
+    "T. Cholesterol",
+    "TC"
+  ],
+  "hdlCholesterol": [
+    "HDL Cholesterol",
+    "HDL-C",
+    "HDL Cholesterol - Direct",
+    "Cholesterol, HDL",
+    "High Density Lipoprotein",
+    "HDL",
+    "H.D.L. Cholesterol",
+    "HDL-Cholesterol"
+  ],
+  "hba1c": [
+    "HbA1c",
+    "HbA1C",
+    "Glycated Haemoglobin (HbA1c)",
+    "Glycosylated Hemoglobin",
+    "Hemoglobin A1c",
+    "A1C",
+    "Glycated Hb",
+    "HbA1c (IFCC)"
+  ],
+  "fastingGlucose": [
+    "Fasting Blood Sugar",
+    "Glucose, Fasting",
+    "Fasting Plasma Glucose (FPG)",
+    "FBS",
+    "Glucose Fasting (Plasma)",
+    "Blood Glucose (Fasting)",
+    "Fasting Glucose",
+    "Plasma Glucose - F",
+    "Glucose F"
+  ],
+  "creatinine": [
+    "Creatinine",
+    "Serum Creatinine",
+    "Creatinine, Serum",
+    "S. Creatinine",
+    "CREATININE (SERUM)",
+    "Creat."
+  ],
+  "egfr": [
+    "eGFR",
+    "eGFR (CKD-EPI 2021)",
+    "Estimated GFR",
+    "GFR, Estimated",
+    "Estimated Glomerular Filtration Rate",
+    "eGFR-Creatinine"
+  ],
+  "restingHeartRate": [
+    "Pulse",
+    "Pulse Rate",
+    "Heart Rate",
+    "HR"
+  ],
+  "spo2": [
+    "SpO2",
+    "Oxygen Saturation",
+    "O2 Sat",
+    "SpO₂"
+  ],
+  "temperature": [
+    "Temperature",
+    "Body Temperature",
+    "Temp",
+    "Temp."
+  ],
+  "plainGlucose": [
+    "Glucose",
+    "Blood Glucose",
+    "Plasma Glucose"
+  ],
+  "bloodPressure": [
+    "Blood Pressure",
+    "BP",
+    "B.P."
+  ]
+}

@@ -1,12 +1,11 @@
-import { ApiError, apiFetch } from './client';
 import { ageFrom, riskSexOf } from '../questionnaire/answers';
 import { SECTIONS } from '../questionnaire/sections';
 
-// Talks to the HealthNet risk engine (FINAL YEAR PROJECT/risk_api.py).
-// The engine calculates on the fly and stores nothing; results are kept in Firestore by UserDataContext.
+// Risk scores for questionnaire answers. They are calculated on this device by the risk engine in
+// src/risk (a tested port of the Python reference engine in FINAL YEAR PROJECT/risk), so the health
+// profile is never sent anywhere. Results are kept in Firestore by UserDataContext.
 
-// Answers the engine reads (see risk/profile.py). Anything else, such as medications or
-// allergies, never leaves the browser for this request.
+// Answers the engine reads (see src/risk/profile.js)
 const PROFILE_FIELDS = {
   about: ['country', 'height', 'weight', 'waist', 'neck'],
   lifestyle: ['smoking', 'dailyActivity', 'fruitVeg', 'auditFrequency', 'auditTypical', 'auditBinge'],
@@ -52,14 +51,25 @@ export const sectionForField = (field) => {
   return SECTIONS.find((section) => section.questions.some((question) => question.id === field))?.id ?? 'about';
 };
 
-// Kept under its original name for existing callers
-export const RiskApiError = ApiError;
-
-export const fetchAssessment = async (profile) => {
-  const data = await apiFetch('/risk/assessment', { method: 'POST', body: profile });
-  // A reply without scores (e.g. from a proxy or an older API) must not reach the Dashboard
-  if (!data || typeof data.scores !== 'object' || data.scores === null) {
-    throw new ApiError('unknown');
+export class RiskError extends Error {
+  constructor(code) {
+    super(`Risk calculation failed: ${code}`);
+    this.code = code; // invalid | loadFailed | unknown
   }
-  return data;
+}
+
+// { engineVersion, scores, disclaimer } for a profile from buildProfile. The engine is loaded on
+// first use, so it only downloads for people who have answered something.
+export const calculateAssessment = async (profile) => {
+  let engine;
+  try {
+    engine = await import('../risk');
+  } catch {
+    throw new RiskError('loadFailed');
+  }
+  try {
+    return engine.assess(profile);
+  } catch (error) {
+    throw new RiskError(error.code === 'invalid' ? 'invalid' : 'unknown');
+  }
 };

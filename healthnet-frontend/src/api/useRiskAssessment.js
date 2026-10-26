@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useUserData } from '../context/UserDataContext';
-import { buildProfile, fetchAssessment, profileKey } from './risk';
+import { buildProfile, calculateAssessment, profileKey } from './risk';
 
 // Risk scores for the signed-in user's current answers. Saved results are reused while the
-// answers are unchanged; otherwise the engine is asked again and the new results are saved.
+// answers are unchanged; otherwise they are calculated again on this device and saved.
 // status: loading | empty (nothing answered yet) | error | ready
 export const useRiskAssessment = () => {
   const { status: dataStatus, answers, results, storeResults } = useUserData();
@@ -20,7 +20,7 @@ export const useRiskAssessment = () => {
     if (dataStatus !== 'ready' || !hasAnswers || current) return undefined;
     let cancelled = false;
     setRequest({ loading: true, error: null });
-    fetchAssessment(profileRef.current)
+    calculateAssessment(profileRef.current)
       .then((data) => {
         if (cancelled) return;
         setRequest({ loading: false, error: null });

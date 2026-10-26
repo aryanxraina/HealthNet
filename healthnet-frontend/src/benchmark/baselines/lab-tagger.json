@@ -1,0 +1,98 @@
+{
+  "seed": 20261025,
+  "documents": 600,
+  "overall": {
+    "documents": 600,
+    "values": 3809,
+    "precision": 0.997,
+    "recall": 0.9643,
+    "f1": 0.9804,
+    "dangerousErrorRate": 0,
+    "documentsWithDangerousError": 0
+  },
+  "byLayout": {
+    "table": {
+      "documents": 109,
+      "values": 681,
+      "precision": 0.994,
+      "recall": 0.9677,
+      "f1": 0.9807,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    },
+    "flagged": {
+      "documents": 106,
+      "values": 666,
+      "precision": 0.9984,
+      "recall": 0.9625,
+      "f1": 0.9801,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    },
+    "rangeFirst": {
+      "documents": 91,
+      "values": 581,
+      "precision": 0.9964,
+      "recall": 0.9501,
+      "f1": 0.9727,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    },
+    "unitInName": {
+      "documents": 74,
+      "values": 468,
+      "precision": 0.9978,
+      "recall": 0.9637,
+      "f1": 0.9804,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    },
+    "colon": {
+      "documents": 106,
+      "values": 675,
+      "precision": 1,
+      "recall": 0.9644,
+      "f1": 0.9819,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    },
+    "split": {
+      "documents": 114,
+      "values": 738,
+      "precision": 0.9958,
+      "recall": 0.9743,
+      "f1": 0.9849,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    }
+  },
+  "byNoise": {
+    "clean": {
+      "documents": 299,
+      "values": 1887,
+      "precision": 1,
+      "recall": 0.9693,
+      "f1": 0.9844,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    },
+    "light": {
+      "documents": 180,
+      "values": 1133,
+      "precision": 0.9991,
+      "recall": 0.9691,
+      "f1": 0.9839,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    },
+    "heavy": {
+      "documents": 121,
+      "values": 789,
+      "precision": 0.9868,
+      "recall": 0.9455,
+      "f1": 0.9657,
+      "dangerousErrorRate": 0,
+      "documentsWithDangerousError": 0
+    }
+  }
+}

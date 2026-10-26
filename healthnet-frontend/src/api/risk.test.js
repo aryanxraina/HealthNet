@@ -1,4 +1,4 @@
-import { buildProfile, fetchAssessment, profileKey, RiskApiError, sectionForField } from './risk';
+import { buildProfile, calculateAssessment, profileKey, RiskError, sectionForField } from './risk';
 
 jest.mock('../firebase');
 
@@ -42,39 +42,22 @@ test('missing fields link to the section that asks for them', () => {
   expect(sectionForField('snoring')).toBe('sleep');
 });
 
-describe('fetchAssessment', () => {
-  afterEach(() => {
+describe('calculateAssessment', () => {
+  test('calculates every score on the device without any request', async () => {
+    global.fetch = jest.fn();
+    const result = await calculateAssessment(buildProfile(answers, new Date('2026-10-25')));
+    expect(result.engineVersion).toBe('1.0.0');
+    expect(Object.keys(result.scores)).toEqual([
+      'bodyComposition', 'whoCvd', 'prevent', 'framinghamHtn', 'findrisc', 'mlDiabetes', 'phq4', 'stopBang', 'auditC',
+    ]);
+    expect(result.scores.phq4).toMatchObject({ status: 'ok', value: 6 });
+    expect(global.fetch).not.toHaveBeenCalled();
     delete global.fetch;
   });
 
-  test('sends the profile with the signed-in user token', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ scores: {} }) });
-    await expect(fetchAssessment({ age: 40 })).resolves.toEqual({ scores: {} });
-    const [url, options] = global.fetch.mock.calls[0];
-    expect(url).toBe('http://localhost:8000/risk/assessment');
-    expect(options.headers.Authorization).toBe('Bearer test-token');
-    expect(JSON.parse(options.body)).toEqual({ age: 40 });
-  });
-
-  test.each([
-    [401, 'auth'],
-    [422, 'invalid'],
-    [503, 'notConfigured'],
-    [500, 'unknown'],
-  ])('maps HTTP %i to %s', async (status, code) => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false, status });
-    await expect(fetchAssessment({})).rejects.toMatchObject({ code });
-  });
-
-  test('rejects a reply without scores', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ matches: [] }) });
-    await expect(fetchAssessment({})).rejects.toMatchObject({ code: 'unknown' });
-  });
-
-  test('reports an unreachable API', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new TypeError('Failed to fetch'));
-    const error = await fetchAssessment({}).catch((e) => e);
-    expect(error).toBeInstanceOf(RiskApiError);
-    expect(error.code).toBe('unavailable');
+  test('rejects profiles the engine cannot use', async () => {
+    const error = await calculateAssessment({ age: 40, systolic: 400 }).catch((e) => e);
+    expect(error).toBeInstanceOf(RiskError);
+    expect(error.code).toBe('invalid');
   });
 });

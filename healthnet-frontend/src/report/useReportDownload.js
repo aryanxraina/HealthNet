@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { getDisplayName, useAuth } from '../context/AuthContext';
 import { useUserData } from '../context/UserDataContext';
 import { useTranslation } from '../i18n';
-import { buildProfile, fetchAssessment, profileKey } from '../api/risk';
+import { buildProfile, calculateAssessment, profileKey } from '../api/risk';
 import { downloadReportCard } from './download';
 
 // Download handler for the report card. Scores are refreshed first if the answers changed since
@@ -27,7 +27,7 @@ export const useReportDownload = () => {
       let current = results;
       const key = profileKey(profile);
       if (current?.profileKey !== key) {
-        current = { ...(await fetchAssessment(profile)), profileKey: key, calculatedAt: new Date().toISOString() };
+        current = { ...(await calculateAssessment(profile)), profileKey: key, calculatedAt: new Date().toISOString() };
         storeResults(current).catch(() => {});
       }
       await downloadReportCard({ name: getDisplayName(user), answers, results: current, settings, t, language });

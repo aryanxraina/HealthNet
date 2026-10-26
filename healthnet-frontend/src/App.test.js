@@ -252,9 +252,13 @@ const yearsAgo = (years) => {
 const dashboardAnswers = () => ({
   about: { dateOfBirth: yearsAgo(50), gender: 'female', country: 'IN', height: 160, weight: 68, waist: 86, neck: 34, _status: 'complete' },
   lifestyle: { smoking: 'never', dailyActivity: 'no', fruitVeg: 'yes', auditFrequency: 'never' },
-  medical: { conditions: ['none'], bpMedication: 'no', statin: 'no', medications: 'Metformin' },
+  medical: {
+    conditions: ['none'], bpMedication: 'no', statin: 'no', highGlucoseHistory: 'no', familyDiabetes: 'immediate',
+    parentsHypertension: 'one', pregnancies: 2, medications: 'Metformin',
+  },
   vitals: { systolic: 128, diastolic: 82, fastingGlucose: 104 },
   mental: { phq1: '2', phq2: '2', phq3: '1', phq4: '0' },
+  sleep: { snoring: 'no', tired: 'yes', observedApnea: 'no' },
 });
 
 const mockApi = (response = fixture.response) => {
@@ -294,10 +298,13 @@ test('the dashboard shows real scores and saves them', async () => {
   // Positive anxiety screen shows where to get help
   expect(screen.getByRole('link', { name: /find a free, confidential helpline/i })).toHaveAttribute('href', 'https://findahelpline.com');
 
-  const [, request] = global.fetch.mock.calls[0];
-  expect(request.headers.Authorization).toBe('Bearer test-token');
-  expect(request.body).not.toMatch(/Metformin/);
+  // Calculated on this device: nothing about the person was sent anywhere
+  expect(global.fetch).not.toHaveBeenCalled();
   await waitFor(() => expect(__getMockStore()['test-user'].results.scores.whoCvd.value).toBe(3.2));
+  // The fixture is the Python reference engine's output for these same answers
+  const { buildProfile } = require('./api/risk');
+  expect(buildProfile(dashboardAnswers())).toEqual(fixture.profile);
+  expect(__getMockStore()['test-user'].results.scores).toEqual(fixture.response.scores);
 });
 
 test('saved scores are reused while the answers are unchanged', async () => {
@@ -333,18 +340,15 @@ test('the diabetes card switches between FINDRISC and the experimental model', a
   await waitFor(() => expect(__getMockStore()['test-user'].settings.diabetesModel).toBe('ml'));
 });
 
-test('the dashboard explains when the risk service is unreachable', async () => {
-  global.fetch = jest.fn().mockRejectedValue(new TypeError('Failed to fetch'));
-  __getMockStore()['test-user'] = { answers: dashboardAnswers() };
+test('the dashboard explains answers the risk engine cannot use', async () => {
+  const answers = dashboardAnswers();
+  // Outside what the questionnaire allows, e.g. saved by an older version of the app
+  answers.vitals.systolic = 400;
+  __getMockStore()['test-user'] = { answers };
   __setMockUser(testUser);
   renderAt('/dashboard');
 
-  expect(await screen.findByText(/couldn't reach the healthnet risk service/i)).toBeInTheDocument();
-  global.fetch.mockResolvedValue({ ok: true, json: async () => fixture.response });
-  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-
-  expect(await screen.findByRole('article', { name: 'Heart attack & stroke risk (WHO)' })).toBeInTheDocument();
-  expect(global.fetch).toHaveBeenCalledTimes(2);
+  expect(await screen.findByText(/some of your answers could not be used/i)).toBeInTheDocument();
 });
 
 test('Settings downloads the PDF report card with fresh scores', async () => {
@@ -362,8 +366,8 @@ test('Settings downloads the PDF report card with fresh scores', async () => {
   expect(name).toBe('Test User');
   expect(results.scores.whoCvd.value).toBe(3.2);
   expect(answers.about.country).toBe('IN');
-  // Scores were missing, so they were calculated and saved on the way
-  expect(global.fetch.mock.calls.filter(([url]) => String(url).includes('/risk/'))).toHaveLength(1);
+  // Scores were missing, so they were calculated on the device and saved on the way
+  expect(global.fetch.mock.calls.filter(([url]) => String(url).includes('/risk/'))).toHaveLength(0);
   await waitFor(() => expect(__getMockStore()['test-user'].results.profileKey).toBeDefined());
 });
 
@@ -479,7 +483,6 @@ const PRESCRIPTION_TEXT = `
 // Answers /drugs/match like the real API: a match for metformin, nothing for other names
 const mockDrugApi = ({ offline = false } = {}) => {
   global.fetch = jest.fn(async (url) => {
-    if (String(url).includes('/risk/assessment')) return { ok: true, json: async () => fixture.response };
     if (offline) throw new TypeError('Failed to fetch');
     const q = decodeURIComponent(String(url).split('q=')[1] || '').toLowerCase();
     const matches = /metfromin|metformin/.test(q)
@@ -581,7 +584,6 @@ const mockCloudApi = ({ extract = {}, extractStatus = 200, available = true } = 
       const q = decodeURIComponent(path.split('q=')[1]).toLowerCase();
       return reply(200, { query: q, matches: q.includes('amlodipine') ? [{ rxcui: '329528', name: 'amlodipine 5 MG', termType: 'SCDC', ingredient: 'amlodipine', similarity: 1 }] : [] });
     }
-    if (path.includes('/risk/assessment')) return reply(200, fixture.response);
     throw new Error(`unexpected request ${path}`);
   });
 };

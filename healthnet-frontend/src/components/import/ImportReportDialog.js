@@ -4,6 +4,7 @@ import { useUserData } from '../../context/UserDataContext';
 import { sectionById } from '../../questionnaire/sections';
 import { fromStandard, toStandard, unitFor } from '../../lib/units';
 import { labItemsFromCloud, parseLabReport } from '../../ocr/labParser';
+import { loadTagger } from '../../ocr/tagger/tagger';
 import { readDocument } from '../../ocr/readDocument';
 import { extractDocument } from '../../api/extract';
 import { DialogFrame, FilePicker, FooterButtons, Problem, Reading } from './DialogFrame';
@@ -55,8 +56,9 @@ const ImportReportDialog = ({ onClose, onApply }) => {
     setPhase('reading');
     setStep(null);
     try {
-      const { lines } = await readDocument(chosen, setStep);
-      showItems(parseLabReport(lines));
+      // The Tagger loads alongside the reading; without it (e.g. offline), the rules still work
+      const [{ lines }, tagger] = await Promise.all([readDocument(chosen, setStep), loadTagger().catch(() => null)]);
+      showItems(parseLabReport(lines, { tagger }));
     } catch {
       setPhase('failed');
     }

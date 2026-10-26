@@ -1,6 +1,6 @@
 # On-device model roadmap
 
-**Status:** design, not built yet · **Written:** October 2026 · **Owner:** HealthNet team
+**Status:** R0, R1 and R2 done (October 2026); R3 onwards designed, not built · **Written:** October 2026 · **Owner:** HealthNet team
 
 HealthNet's long-term privacy goal is simple to state: **a person's health data never has to leave their device to be useful.** The app ships *models* to the device and receives *nothing* back unless the person explicitly chooses to share. This document explains how to get there from what exists today. It covers which models to use, how to train them without collecting real health records, how to ship model updates safely, and how to prove each step is better than the last.
 
@@ -19,14 +19,14 @@ Version 1 already does a lot on the device. The table shows each stage and where
 | Unit conversion and range checks | `src/lib/units.js`, `sections.js` limits | Device |
 | Hard documents (messy photos, handwriting) | Opt-in "Enhanced reading": Claude or Gemini (`extraction/providers.py`) | **Cloud, with consent per file** |
 | Medicine name matching | RxNorm via `/drugs/match` (only the medicine word is sent) | Server → NLM |
-| Risk scores | Python risk engine (`risk/`, `/risk/assessment`) | **Server** |
+| Risk scores | JavaScript port of the Python engine (`src/risk/`), checked against it by a parity test | Device (since R1) |
 | Food search, barcodes | USDA / Open Food Facts via `/food/*` (only search words) | Server → third party |
 | Storage | Firestore (encrypted at rest by Google, readable by the project) | Cloud |
 
 Two observations shape the roadmap:
 
 1. **The weakest on-device link is structure, not OCR.** PP-OCR reads printed lab reports well. The rules then have to decide which number belongs to which test, and which unit applies. Every new lab layout can break them. That's where a small model helps most.
-2. **"Data stays on the device" is not true yet even without the cloud reader.** The risk engine runs on the server, so the health profile is sent there on every score refresh. It isn't stored, but it is sent. Section 6 fixes this, and it is cheaper than any model work.
+2. **Risk scores now stay on the device (R1).** Until R1 the health profile was sent to the server on every score refresh. The scores are now calculated in the browser; section 6 describes how.
 
 ---
 
@@ -273,9 +273,9 @@ Each milestone ends with a check-in (tests, numbers, screenshots), like the earl
 
 | Milestone | Deliverables | Exit criteria | Rough effort |
 |---|---|---|---|
-| **R0 Groundwork** | Benchmark harness that scores any parser against test sets; synthetic generator v1 for lab reports; baseline numbers for today's rules | Baseline F1, dangerous error rate and latency published | 2–3 weeks |
-| **R1 On-device risk engine** | JS port of `risk/`; parity tests in CI; API kept as a fallback | Identical scores on all fixtures; no profile leaves the device | 1–2 weeks |
-| **R2 HealthNet Tagger** | Token classifier trained on synthetic data; ONNX int8; plugged in behind `parseLabReport` with the rules as fallback | Beats rules on `synth-test` and `paper-test`; under 30 MB; under 300 ms per page | 3–4 weeks |
+| **R0 Groundwork** ✅ | Benchmark harness that scores any parser against test sets; synthetic generator v1 for lab reports; baseline numbers for today's rules | Baseline F1, dangerous error rate and latency published | 2–3 weeks |
+| **R1 On-device risk engine** ✅ | JS port of `risk/`; parity tests in CI; the API endpoint stays for other clients and as the reference | Identical scores on all fixtures; no profile leaves the device | 1–2 weeks |
+| **R2 HealthNet Tagger** ✅ (synthetic test; paper test pending) | Name classifier trained on generated data; plugged in behind `parseLabReport`, rules first | Beats rules on `synth-test` and `paper-test`; under 30 MB; under 300 ms per page | 3–4 weeks |
 | **R3 Model delivery** | Signed manifest, verified download, OPFS cache, rollback, Settings → "On-device models" (size, version, delete) | Tampered model refused in tests; works offline after first download | 1–2 weeks |
 | **R4 HealthNet Reader** | 0.5–1B text LLM fine-tuned (LoRA) on synthetic + teacher data, with constrained JSON; WebGPU only; prescriptions included | Beats Tagger + rules on hard cases; valid JSON 100% (enforced by grammar) | 4–6 weeks |
 | **R5 Private mode** | Client-side encryption option; offline medicine and food lists | A user with private mode and no cloud features sends no readable health data | 3–4 weeks |
@@ -284,6 +284,37 @@ Each milestone ends with a check-in (tests, numbers, screenshots), like the earl
 | **R8 Federated learning study** | Simulated federated + DP training on synthetic data | Report on accuracy vs privacy budget | Research / dissertation |
 
 R1 and R2 give the biggest improvement for the least risk, so they come first.
+
+### Results so far
+
+**R1 (on-device risk engine).** `healthnet-frontend/src/risk/` mirrors the Python engine module by module, including Python's rounding rules. `python -m risk.export_frontend` copies the coefficient data, exports the experimental model's fitted parameters to JSON, and writes a parity fixture of 393 profiles (edge cases plus seeded random ones). The frontend test requires identical output for all of them, the same rejections for invalid profiles, and agreement with the 98 WHO Stata reference cases to 1e-9. `tests/test_frontend_parity.py` fails if the frontend copies go stale. The engine loads on first use as its own chunk; the main bundle didn't grow.
+
+**R0 (benchmark).** `src/benchmark/` generates 600 synthetic lab reports in six layouts (seeded, so every run sees the same documents), scores any reader on them, and fails the test suite if the reader gets worse than the committed baseline. `npm run benchmark` records a new baseline and rewrites [docs/benchmarks/lab-reports.md](benchmarks/lab-reports.md). The first run found real safety bugs in the rule-based reader, which were fixed (developed on a different seed, then scored on the test set):
+
+| Rule-based reader | F1 | Precision | Dangerous error rate | Reports with a dangerous error |
+|---|---|---|---|---|
+| Before (first baseline) | 72.5% | 78.5% | 16.2% | 23.5% |
+| After the fixes | **91.4%** | **99.7%** | **0.1%** | **0.3%** |
+
+The bugs were: reference ranges printed before the result were read as the result; numbers inside the test name ("eGFR (CKD-EPI 2021)", "(mL/min/1.73 m²)") or a duration ("Glucose, 2 hr PP") were read as values; dotted abbreviations ("H.D.L.") slipped past look-alike exclusions; and OCR letter/digit mix-ups inside numbers ("l26/79", "O.6") went unrepaired.
+
+What was left was mostly **recall**: test names the dictionary doesn't know ("O2 Sat", "SpO₂", "HR", "Creat.", "TC").
+
+**R2 (HealthNet Tagger).** The benchmark showed the remaining weakness was recognising *which test* a line names; numbers, units and ranges were already handled precisely by the rules. So the Tagger is a name classifier rather than a full token tagger. It is a multinomial logistic regression over character 2- to 4-grams and whole words (`FINAL YEAR PROJECT/training/tagger/`), trained on generated spellings from general lab-reporting conventions with typos and OCR mix-ups. It is 290 KB (55 KB gzipped, loaded only when a report is imported) and adds about 0.4 ms per report. The rules run first; the Tagger only reads lines the rules found nothing on, needs 80% certainty, keeps the dictionary's look-alike exclusions, and marks its items "please check" (`nameGuessed`) at reduced confidence.
+
+A plain linear model was chosen over the BERT-class encoder planned above because it met the exit criteria with no new runtime, at 1/100th of the size; the encoder stays an option if real-world data shows the need.
+
+To keep the evaluation honest, every benchmark spelling was removed from the training data, and the six the rules couldn't place were removed even inside longer names. The Tagger still recognises four of those six ("Creat.", "O2 Sat", "SpO₂", "Glycated Hb"); "HR" and "TC" it calls "other", which is the safe answer for abbreviations it has never seen.
+
+| Reader | Recall | Precision | F1 | Dangerous error rate |
+|---|---|---|---|---|
+| Rules only (test seed) | 87.0% | 99.7% | 92.9% | 0.0% |
+| Rules + Tagger (test seed) | **96.4%** | 99.7% | **98.0%** | 0.0% |
+| Rules + Tagger (fresh seed, 1,000 unseen reports) | 96.4% | 99.7% | 98.1% | 0.03% (rules only: 0.04%) |
+
+Building R2 also exposed more rule bugs, now fixed with regression tests: a unit printed in the name ("Creatinine (µmol/L)") tripped the ratio exclusion; "Est. Avg Glucose" was read as fasting glucose (found in a real-browser run, not by the benchmark, so the benchmark now includes it); and OCR mix-ups in ranges ("7O - 100") and look-alike names ("N0n-HDL") produced wrong values. Some of these were found by reading the test set's error examples, which is why the fresh-seed row is reported.
+
+**Still to do for R2:** the `paper-test` check (section 4.2): print and photograph made-up reports in different layouts and lighting, and run them through the real on-device OCR. The synthetic set was written by the same team as the Tagger, so this is the real test of generalisation.
 
 ---
 

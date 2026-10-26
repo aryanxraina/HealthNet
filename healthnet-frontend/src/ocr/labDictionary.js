@@ -45,7 +45,7 @@ export const LAB_TESTS = [
     ],
     // Plain "glucose" is accepted with lower confidence, since it may not be a fasting sample
     looseLabels: ['plasma glucose', 'blood glucose', 'glucose'],
-    exclude: ['post', 'pp', 'random', 'rbs', '2 hr', '2hr', '2-hour', 'ogtt', 'urine', 'average', 'eag'],
+    exclude: ['post', 'pp', 'random', 'rbs', '2 hr', '2hr', '2-hour', 'ogtt', 'urine', 'average', 'avg', 'mean', 'eag'],
     units: { 'mg/dl': 'mg/dL', 'mg%': 'mg/dL', 'mmol/l': 'mmol/L' },
     guess: (n) => (n < 35 ? 'mmol/L' : 'mg/dL'),
   },
@@ -54,7 +54,7 @@ export const LAB_TESTS = [
     kind: 'creatinine',
     loinc: '2160-0',
     labels: ['serum creatinine', 'creatinine, serum', 's. creatinine', 's.creatinine', 'creatinine'],
-    exclude: ['urine', 'ratio', 'clearance', 'albumin', '/'],
+    exclude: ['urine', 'ratio', 'clearance', 'albumin', 'gfr', 'egfr', '/'],
     units: { 'mg/dl': 'mg/dL', 'µmol/l': 'µmol/L', 'umol/l': 'µmol/L', 'μmol/l': 'µmol/L' },
     guess: (n) => (n > 20 ? 'µmol/L' : 'mg/dL'),
   },

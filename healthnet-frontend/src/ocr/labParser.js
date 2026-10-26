@@ -2,6 +2,7 @@ import { sectionById } from '../questionnaire/sections';
 import { toStandard } from '../lib/units';
 import { BLOOD_PRESSURE, LAB_TESTS } from './labDictionary';
 import { fixOcrDigits } from './ocrText';
+import { classifyName } from './tagger/tagger';
 
 // Turns the text lines of a lab report (from a PDF's text layer or on-device OCR) into
 // Vitals answers. Pure functions only, so every lab layout can be unit-tested.
@@ -15,12 +16,17 @@ import { fixOcrDigits } from './ocrText';
 const VITALS = sectionById('vitals');
 const rangeOf = (field) => VITALS.questions.find((question) => question.id === field);
 
-// A number that isn't glued to letters, so the "1" in HbA1c or the "2" in SpO2 don't count
-const NUMBER = /(^|[^a-z0-9.,])([<>≤≥]=?\s*)?(\d+(?:[.,]\d+)?)(?![a-z0-9])/i;
+// A number that isn't glued to letters, so the "1" in HbA1c, the "2" in SpO2 and the "1" of
+// "1.73m2" in an eGFR unit don't count. A unit may touch the number ("78ml/min", "5.6mmol/l").
+const NUMBER = /(^|[^a-z0-9.,])([<>≤≥]=?\s*)?(\d+(?:[.,]\d+)?)(?!(?!(?:mg|mmol|ml|µmol|umol|mmhg|bpm)(?![a-z]))[a-z0-9]|[.,]\d)/i;
 
 const normalise = (text) =>
   fixOcrDigits(text)
     .toLowerCase()
+    // Dotted abbreviations: "h.d.l." -> "hdl", so look-alike exclusions still apply
+    .replace(/\b(?:[a-z]\.){2,}/g, (abbreviation) => abbreviation.replace(/\./g, ''))
+    // A zero between letters is an OCR'd "o" ("n0n-hdl"); a one is left alone, for "hba1c"
+    .replace(/([a-z])0(?=[a-z])/g, '$1o')
     .replace(/[μ]/g, 'µ')
     .replace(/\s*\/\s*/g, '/')
     .replace(/\s+/g, ' ')
@@ -55,6 +61,39 @@ const readingsOf = (text) => {
   return { readings, trailing: text.slice(last).trim() };
 };
 
+// The readings that can be a result: reference ranges ("70 - 100", or "< 200" when another number
+// follows), numbers inside the name's brackets ("eGFR (CKD-EPI 2021)") and durations that are part
+// of the name ("Glucose, 2 hr PP") are skipped, and their text joins the next reading's name
+// (not a bare "h", which is how reports flag a high result: "212 H mg/dL")
+const DURATION = /^\s*(?:hr|hrs|hour|hours)(?![a-z])/;
+
+const resultReadings = (readings) => {
+  const skip = new Set();
+  readings.forEach((reading, index) => {
+    const next = readings[index + 1];
+    if (next && /^\s*[-–]\s*$/.test(reading.after)) {
+      skip.add(index).add(index + 1);
+    }
+    if (DURATION.test(reading.after)) skip.add(index);
+  });
+  readings.forEach((reading, index) => {
+    if (reading.comparator && readings.some((other, later) => later > index && !skip.has(later) && !other.comparator)) skip.add(index);
+  });
+  const results = [];
+  let carried = '';
+  readings.forEach((reading, index) => {
+    const name = `${carried} ${reading.name}`.trim();
+    const open = (name.match(/\(/g) || []).length - (name.match(/\)/g) || []).length;
+    if (skip.has(index) || (open > 0 && reading.after.includes(')'))) {
+      carried = `${name} ${reading.value}${reading.after}`;
+      return;
+    }
+    results.push({ ...reading, name });
+    carried = '';
+  });
+  return results;
+};
+
 // The unit printed nearest after the value ("6.1 % (43 mmol/mol)" -> %); on a tie the longer
 // spelling wins, so "ml/min/1.73m2" beats "ml/min"
 const findUnit = (test, ...texts) => {
@@ -72,9 +111,13 @@ const findUnit = (test, ...texts) => {
 };
 
 // Short words ("pp", "hdl") must match whole words; longer ones and symbols match anywhere,
-// so "post" also catches "postprandial"
-const excluded = (test, name) =>
-  test.exclude.some((word) => (/^[a-z]{1,3}$/.test(word) ? hasWord(name, word) : name.includes(word)));
+// so "post" also catches "postprandial". The test's own unit in brackets ("Creatinine (mg/dL)")
+// is ignored, so its "/" isn't mistaken for a ratio.
+const excluded = (test, name) => {
+  const units = Object.keys(test.units);
+  const text = name.replace(/\(([^)]*)\)/g, (bracket, inside) => (units.some((unit) => inside.trim() === unit) ? ' ' : bracket));
+  return test.exclude.some((word) => (/^[a-z]{1,3}$/.test(word) ? hasWord(text, word) : text.includes(word)));
+};
 
 // Converts a printed value to the questionnaire's standard unit
 const standardise = (test, value, unit) => {
@@ -154,20 +197,23 @@ const parseTestLine = (test, lines, index) => {
   const raw = lines[index].text;
   const { readings, trailing } = readingsOf(normalise(raw));
   const lineConfidence = lines[index].confidence ?? 1;
-  for (const r of readings) {
+  const results = resultReadings(readings);
+  for (const r of results) {
     const labelMatch = matchLabel(test, r.name);
     if (labelMatch && !excluded(test, r.name)) {
       return reading(test, { ...r, unitTexts: [r.after, r.name], labelMatch, lineConfidence, sourceText: raw.trim() });
     }
   }
-  // Some layouts put the result on the line below the test name
-  const labelMatch = matchLabel(test, trailing);
-  if (labelMatch && !excluded(test, trailing) && lines[index + 1]) {
+  // Some layouts put the result on the line below the test name. A line with no possible result
+  // (e.g. "eGFR (CKD-EPI 2021)") is all name.
+  const nameText = results.length ? trailing : normalise(raw);
+  const labelMatch = matchLabel(test, nameText);
+  if (labelMatch && !excluded(test, nameText) && lines[index + 1]) {
     const next = readingsOf(normalise(lines[index + 1].text)).readings[0];
     if (next && !next.name) {
       return reading(test, {
         ...next,
-        unitTexts: [next.after, trailing],
+        unitTexts: [next.after, nameText],
         labelMatch,
         lineConfidence: Math.min(lineConfidence, lines[index + 1].confidence ?? 1),
         sourceText: `${raw.trim()} ${lines[index + 1].text.trim()}`,
@@ -192,17 +238,80 @@ const parseBloodPressure = (line) => {
   ];
 };
 
+// The Tagger (src/ocr/tagger) reads a line only when the rules found nothing on it, and only when it
+// is at least this sure. Its items are marked nameGuessed and their confidence scaled by its certainty.
+export const TAGGER_MIN_PROBABILITY = 0.8;
+const TAGGER_MAX_SHARE = 0.9;
+const hasLetters = (text) => /[a-z]{2}/.test(text);
+
+const parseWithTagger = (tagger, lines, index) => {
+  const raw = lines[index].text;
+  const text = normalise(raw);
+  if (!hasLetters(text)) return [];
+  const lineConfidence = lines[index].confidence ?? 1;
+  const results = resultReadings(readingsOf(text).readings);
+  let candidate;
+  if (results.length) {
+    // The first reading that follows a name. Everything before it is the name, so a number OCR made
+    // out of letters ("02 Sat" for "O2 Sat") stays part of it.
+    const first = results.find((r) => hasLetters(r.name));
+    if (!first) return [];
+    const name = text.slice(0, first.start).trim();
+    candidate = { name, found: first, unitTexts: [first.after, name], lineConfidence, sourceText: raw.trim() };
+  } else {
+    // The result may be on the next line, as in the rules
+    const next = lines[index + 1] && readingsOf(normalise(lines[index + 1].text)).readings[0];
+    if (!next || next.name) return [];
+    candidate = {
+      name: text,
+      found: next,
+      unitTexts: [next.after, text],
+      lineConfidence: Math.min(lineConfidence, lines[index + 1].confidence ?? 1),
+      sourceText: `${raw.trim()} ${lines[index + 1].text.trim()}`,
+    };
+  }
+
+  const { label, probability } = classifyName(tagger, candidate.name);
+  if (label === 'other' || probability < TAGGER_MIN_PROBABILITY) return [];
+  // A guessed name never looks as certain as a dictionary match, however sure the model is
+  const confidence = candidate.lineConfidence * Math.min(probability, TAGGER_MAX_SHARE);
+  let items;
+  if (label === 'bloodPressure') {
+    const match = /(\d{2,3})\/(\d{2,3})/.exec(text);
+    if (!match) return [];
+    const shared = { unit: 'mmHg', unitGuessed: false, comparator: '', lineConfidence: confidence, sourceText: raw.trim() };
+    items = [item(SYSTOLIC, { ...shared, value: Number(match[1]) }), item(DIASTOLIC, { ...shared, value: Number(match[2]) })];
+  } else {
+    const spec = LAB_TESTS.find((test) => test.field === (label === 'glucoseUnspecified' ? 'fastingGlucose' : label));
+    // The dictionary's look-alike exclusions still apply ("urine", "ratio", "post"...)
+    if (!spec || excluded(spec, candidate.name)) return [];
+    items = [
+      reading(spec, {
+        ...candidate.found,
+        unitTexts: candidate.unitTexts,
+        labelMatch: label === 'glucoseUnspecified' ? 'loose' : 'exact',
+        lineConfidence: confidence,
+        sourceText: candidate.sourceText,
+      }),
+    ];
+  }
+  items.forEach((found) => found.notes.push('nameGuessed'));
+  return items;
+};
+
 // Best reading per field: in-range beats out-of-range, then higher confidence, then earlier in the report
 const better = (a, b) => (a.inRange !== b.inRange ? a.inRange : a.confidence > b.confidence);
 
-export const parseLabReport = (lines) => {
+// options.tagger: the Tagger model (loadTagger in src/ocr/tagger/tagger.js); without it, rules only
+export const parseLabReport = (lines, { tagger } = {}) => {
   const best = {};
   const keep = (found) => {
     if (found && (!best[found.field] || better(found, best[found.field]))) best[found.field] = found;
   };
   lines.forEach((line, index) => {
-    parseBloodPressure(line).forEach(keep);
-    LAB_TESTS.forEach((test) => keep(parseTestLine(test, lines, index)));
+    const fromRules = [...parseBloodPressure(line), ...LAB_TESTS.map((test) => parseTestLine(test, lines, index)).filter(Boolean)];
+    fromRules.forEach(keep);
+    if (tagger && fromRules.length === 0) parseWithTagger(tagger, lines, index).forEach(keep);
   });
   const order = VITALS.questions.map((question) => question.id);
   return Object.values(best).sort((a, b) => order.indexOf(a.field) - order.indexOf(b.field));
