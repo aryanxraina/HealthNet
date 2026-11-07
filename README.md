@@ -14,6 +14,7 @@ AI-powered preventive healthcare platform that helps people anywhere understand 
 - Guided health questionnaire with a progress tracker, saved per user in Firestore
 - Dashboard with your real risk scores (calculated on your device, so your answers aren't sent anywhere), the latest readings you entered, and "add this to unlock" links. Some side panels still show labelled sample data
 - Wearable sync: connect Google Health (Fitbit, Pixel Watch) in Settings → Devices to chart daily steps, resting heart rate and sleep on the Dashboard
+- Health assistant: explains your results in plain language; suggested questions are answered on your device, typed questions use an opt-in cloud model
 - Food tracker: log meals from food search, barcodes, your own entries or (with Enhanced reading) a meal photo; daily calories and macros against your goal, and a 7-day view
 - Settings: display name, units (metric/imperial, mg/dL or mmol/L, °C/°F), light/dark theme, language, diabetes model, password reset, account deletion
 - Personalised PDF report card (a friendly summary plus a detail page for your doctor) and a raw JSON export
@@ -77,6 +78,19 @@ How files are handled:
 
 Rough cost per report page: under $0.01 with Haiku or Gemini Flash, and a few cents with Opus.
 
+#### Optional: Health assistant (cloud answers)
+The chat button opens an **"Explain my results"** assistant:
+- **Suggested questions** ("Explain my heart risk", "How can I lower my risks?", "What should I ask my doctor?"...) are answered **on the device** from the person's own scores. Nothing is sent, and no setup is needed.
+- **Typed questions** go to Claude or Gemini **only after the person agrees**. Only the question, the conversation and a summary of their scores (names, values and bands) are sent, never their name, email or questionnaire answers. Nothing is stored by the API.
+- **Safety:** emergencies (chest pain, stroke signs, breathing trouble, self-harm) are recognised on the device first and answered with emergency and helpline guidance; the server checks again and never passes them to a model. The model is told to stay educational: no diagnosis, no medicine changes, and to point people to a doctor, nurse or pharmacist.
+
+| Setting | Values |
+|---|---|
+| `ASSISTANT_PROVIDER` | `none`, `claude` or `gemini`; defaults to `EXTRACTION_PROVIDER` |
+| `ASSISTANT_MODEL` (optional) | Defaults to `claude-opus-5-5` or `gemini-flash-latest`. `claude-haiku-5-5` costs much less. |
+
+Each person can send 30 typed questions an hour. Rough cost per answer: well under $0.01 with Haiku or Gemini Flash, a few cents with Opus.
+
 Medicine names from prescriptions are checked against the free RxNorm database (`GET /drugs/match`); no key is needed.
 
 #### Food tracker data
@@ -118,6 +132,7 @@ curl -X POST http://127.0.0.1:8000/predict-diabetes \
 ## Development Notes
 - **Risk scores are calculated in the browser** by `healthnet-frontend/src/risk/`, a port of the Python engine in `FINAL YEAR PROJECT/risk/` (still the reference, and still served at `/risk/assessment` for other clients). After changing the Python engine or its data, run `python -m risk.export_frontend` from `FINAL YEAR PROJECT/`, then the frontend tests; both test suites fail until the two match.
 - **HealthNet Tagger** (recognises lab test names the rules don't know): retrain with `python -m training.tagger.train` from `FINAL YEAR PROJECT/`; it writes `healthnet-frontend/src/ocr/tagger/model.json` and a parity fixture the frontend tests check.
+- **Publishing on-device models** (signed updates the app can install without a new release): once, run `python -m training.release --generate-key` from `FINAL YEAR PROJECT/`. It writes the private key to `~/.healthnet/model-signing-key.pem` (or `HEALTHNET_MODEL_SIGNING_KEY`) and the app's public key to `healthnet-frontend/src/models/publicKey.json`. After retraining (bump `MODEL_VERSION`), run `python -m training.release` to copy the model into `healthnet-frontend/public/models/` and sign `manifest.json`. **Never commit the private key**; if it's lost, generate a new one and ship the new public key in an app update. Set `REACT_APP_MODEL_BASE_URL` to serve models from a CDN instead.
 - **Report-reading benchmark:** `npm test` fails if the lab report reader scores worse than its baseline on 600 synthetic reports. After a deliberate improvement, run `npm run benchmark` (in `healthnet-frontend/`) to record the new baseline and update [docs/benchmarks/lab-reports.md](docs/benchmarks/lab-reports.md).
 - Commit source only. `node_modules/`, builds, virtual environments and `.env*` files are ignored; `.env.example` is kept as a template.
 - `diabetes_model.pkl` must be loaded with the scikit-learn version pinned in `requirements.txt`. Retrain it after changing that version.

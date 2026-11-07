@@ -1,7 +1,7 @@
 import PARITY from './__fixtures__/parity.json';
 import MODEL from './model.json';
 import { featureCounts } from './features';
-import { classifyName } from './tagger';
+import { classifyName, selfTest } from './classify';
 import { parseLabReport, textToLines } from '../labParser';
 
 // The fixture holds the Python training code's features and probabilities for the exported model
@@ -52,4 +52,11 @@ test('average glucose is never read as a fasting result, by the rules or the Tag
 test('a test name that OCR turned partly into digits still reaches the Tagger', () => {
   const [spo2] = read('02 Sat    97    %    95-100', { tagger: MODEL });
   expect(spo2).toMatchObject({ field: 'spo2', standardValue: 97 });
+});
+
+test('the self-test passes the shipped model and rejects broken ones', () => {
+  expect(selfTest(MODEL)).toBe(true);
+  expect(selfTest({ ...MODEL, weights: {} })).toBe(false);
+  expect(selfTest({ ...MODEL, intercepts: [0] })).toBe(false);
+  expect(selfTest(null)).toBe(false);
 });

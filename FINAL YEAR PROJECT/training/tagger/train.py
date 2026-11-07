@@ -37,6 +37,8 @@ MIN_FEATURE_COUNT = 2
 WEIGHT_DECIMALS = 2
 MIN_WEIGHT = 0.25
 C_VALUES = (1, 4, 16)
+# Bump for every retrained release; the app compares it with the version built into it
+MODEL_VERSION = "1.0.0"
 
 # Benchmark spellings the rule-based reader can't place (docs/benchmarks/lab-reports.md). The model must
 # learn to read these without ever seeing them, even as part of a longer name.
@@ -104,7 +106,7 @@ def export(classifier, columns, labels):
         if np.max(np.abs(row)) >= MIN_WEIGHT:
             weights[name] = [round(float(w), WEIGHT_DECIMALS) for w in row]
     return {
-        "version": 1,
+        "version": MODEL_VERSION,
         "labels": labels,
         "intercepts": [round(float(b), WEIGHT_DECIMALS) for b in classifier.intercept_],
         "weights": weights,

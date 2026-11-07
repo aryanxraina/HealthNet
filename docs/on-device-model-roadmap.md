@@ -1,6 +1,6 @@
 # On-device model roadmap
 
-**Status:** R0, R1 and R2 done (October 2026); R3 onwards designed, not built · **Written:** October 2026 · **Owner:** HealthNet team
+**Status:** R0–R3 done (October 2026); R4 onwards designed, not built · **Written:** October 2026 · **Owner:** HealthNet team
 
 HealthNet's long-term privacy goal is simple to state: **a person's health data never has to leave their device to be useful.** The app ships *models* to the device and receives *nothing* back unless the person explicitly chooses to share. This document explains how to get there from what exists today. It covers which models to use, how to train them without collecting real health records, how to ship model updates safely, and how to prove each step is better than the last.
 
@@ -276,7 +276,7 @@ Each milestone ends with a check-in (tests, numbers, screenshots), like the earl
 | **R0 Groundwork** ✅ | Benchmark harness that scores any parser against test sets; synthetic generator v1 for lab reports; baseline numbers for today's rules | Baseline F1, dangerous error rate and latency published | 2–3 weeks |
 | **R1 On-device risk engine** ✅ | JS port of `risk/`; parity tests in CI; the API endpoint stays for other clients and as the reference | Identical scores on all fixtures; no profile leaves the device | 1–2 weeks |
 | **R2 HealthNet Tagger** ✅ (synthetic test; paper test pending) | Name classifier trained on generated data; plugged in behind `parseLabReport`, rules first | Beats rules on `synth-test` and `paper-test`; under 30 MB; under 300 ms per page | 3–4 weeks |
-| **R3 Model delivery** | Signed manifest, verified download, OPFS cache, rollback, Settings → "On-device models" (size, version, delete) | Tampered model refused in tests; works offline after first download | 1–2 weeks |
+| **R3 Model delivery** ✅ | Signed manifest, verified download, OPFS cache, rollback, Settings → "On-device models" (size, version, delete) | Tampered model refused in tests; works offline after first download | 1–2 weeks |
 | **R4 HealthNet Reader** | 0.5–1B text LLM fine-tuned (LoRA) on synthetic + teacher data, with constrained JSON; WebGPU only; prescriptions included | Beats Tagger + rules on hard cases; valid JSON 100% (enforced by grammar) | 4–6 weeks |
 | **R5 Private mode** | Client-side encryption option; offline medicine and food lists | A user with private mode and no cloud features sends no readable health data | 3–4 weeks |
 | **R6 Help improve HealthNet** | Consent flow, on-device de-identification, contribution store, deletion | Ethics/DPIA approval *before* launch; de-identification tested on synthetic documents containing fake personal details | 3 weeks + approval time |
@@ -313,6 +313,10 @@ To keep the evaluation honest, every benchmark spelling was removed from the tra
 | Rules + Tagger (fresh seed, 1,000 unseen reports) | 96.4% | 99.7% | 98.1% | 0.03% (rules only: 0.04%) |
 
 Building R2 also exposed more rule bugs, now fixed with regression tests: a unit printed in the name ("Creatinine (µmol/L)") tripped the ratio exclusion; "Est. Avg Glucose" was read as fasting glucose (found in a real-browser run, not by the benchmark, so the benchmark now includes it); and OCR mix-ups in ranges ("7O - 100") and look-alike names ("N0n-HDL") produced wrong values. Some of these were found by reading the test set's error examples, which is why the fresh-seed row is reported.
+
+**R3 (signed model delivery).** `python -m training.release` copies each trained model into `healthnet-frontend/public/models/<id>/<version>/` and writes `manifest.json`: every file's SHA-256 and size, minimum app version, rollout share and a kill switch, signed with an Ed25519 key kept outside the repository (`~/.healthnet/model-signing-key.pem`). The payload is stored as a string and signed byte for byte, so no canonical-JSON rules are needed. In the app (`src/models/`), a model is used only if the signature verifies with the public key built into the app (WebCrypto Ed25519), every file matches its hash, and it passes the model's self-test before replacing the current version; signatures and hashes are checked again every time the model loads, and a copy that fails is deleted. The version built into the app is always the fallback, including on browsers without Ed25519 support. **Settings → On-device models** shows the version in use and checks for, installs and removes updates; nothing is checked automatically, and a check downloads only the public manifest.
+
+Tested with a throwaway key in Node (wrong signer, edited manifest, swapped file, failed self-test, tampering after install, kill switch, staged rollout, minimum app version, offline) and in Chrome 156 with the real key: a test release installed, and when its cached file was altered, the next report import refused it, read the report with the built-in model, and removed the bad copy.
 
 **Still to do for R2:** the `paper-test` check (section 4.2): print and photograph made-up reports in different layouts and lighting, and run them through the real on-device OCR. The synthetic set was written by the same team as the Tagger, so this is the real test of generalisation.
 

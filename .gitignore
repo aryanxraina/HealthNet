@@ -33,6 +33,8 @@ Thumbs.db
 !.env.example
 # Wearable connection tokens (encrypted, but never commit them)
 wearables.sqlite3*
+# Model signing keys (kept in ~/.healthnet, but never commit one by accident)
+*signing-key*.pem
 
 # Misc
 *.swp

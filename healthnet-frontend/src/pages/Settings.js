@@ -13,6 +13,7 @@ import { useReportDownload } from '../report/useReportDownload';
 import { EnhancedReadingSetting } from '../components/import/EnhancedReading';
 import DataStatusBanner from '../components/DataStatusBanner';
 import DevicesSetting from '../components/devices/DevicesSetting';
+import ModelSettings from '../components/models/ModelSettings';
 
 const cardClass = 'bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 scroll-mt-20';
 const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2';
@@ -332,6 +333,13 @@ const Settings = () => {
 
           <EnhancedReadingSetting />
         </div>
+      </section>
+
+      {/* On-device models */}
+      <section id="models" className={cardClass}>
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{t('models.title')}</h2>
+        <p className={`${helpClass} mt-1 mb-4`}>{t('models.subtitle')}</p>
+        <ModelSettings />
       </section>
 
       {/* Devices */}

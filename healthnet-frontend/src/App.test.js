@@ -1018,3 +1018,124 @@ test('without a device the Dashboard points to Settings and never calls the wear
   expect(await screen.findByRole('link', { name: 'Connect a device' })).toHaveAttribute('href', '/settings#devices');
   expect(wearableCalls('/wearables')).toHaveLength(0);
 });
+
+// ---- Health assistant ----
+
+const mockAssistantApi = ({ available = true, reply = 'Your heart risk is low. Keep active.', safety = null } = {}) => {
+  global.fetch = jest.fn(async (url, options = {}) => {
+    const path = String(url);
+    const respond = (body, status = 200) => ({ ok: status < 400, status, json: async () => body });
+    if (path.includes('/assistant/status')) {
+      return respond({ available, provider: available ? 'claude' : null, providerName: available ? 'Claude (Anthropic)' : null });
+    }
+    if (path.includes('/assistant/chat') && options.method === 'POST') return respond({ reply, safety, providerName: 'Claude (Anthropic)' });
+    throw new Error(`unexpected request ${path}`);
+  });
+};
+const chatCalls = () => global.fetch.mock.calls.filter(([url]) => String(url).includes('/assistant/chat'));
+
+const openAssistant = async ({ signedIn = true } = {}) => {
+  fireEvent.click(screen.getByRole('button', { name: 'Open the health assistant' }));
+  const panel = await screen.findByRole('dialog', { name: 'Health assistant' });
+  if (signedIn) {
+    // Let the cloud status reply land before the test goes on
+    await waitFor(() => expect(panel).not.toHaveAttribute('data-cloud', 'checking'));
+  }
+  return panel;
+};
+
+test('signed-out visitors get help about HealthNet without any request', async () => {
+  mockAssistantApi();
+  renderAt('/');
+  const panel = await openAssistant({ signedIn: false });
+  fireEvent.click(within(panel).getByRole('button', { name: 'What is HealthNet?' }));
+  expect(within(panel).getByText(/estimates your health risks with published, validated models/)).toBeInTheDocument();
+  expect(within(panel).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('suggested questions are answered on the device from the person\'s own scores', async () => {
+  mockAssistantApi();
+  __getMockStore()['test-user'] = { answers: dashboardAnswers() };
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+  const panel = await openAssistant();
+
+  fireEvent.click(await within(panel).findByRole('button', { name: 'Summarise my results' }));
+  expect(await within(panel).findByText('Heart attack & stroke risk (WHO): 3.2% (Under 5%).')).toBeInTheDocument();
+  expect(within(panel).getAllByText('Answered on your device').length).toBeGreaterThan(0);
+
+  fireEvent.click(within(panel).getByRole('button', { name: "What's still missing?" }));
+  expect(await within(panel).findByText(/Heart disease risk \(AHA PREVENT\): Add total cholesterol/)).toBeInTheDocument();
+  expect(chatCalls()).toHaveLength(0);
+});
+
+test('a typed question goes to the cloud only after consent, with a score summary and nothing personal', async () => {
+  mockAssistantApi();
+  __getMockStore()['test-user'] = { answers: dashboardAnswers() };
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+  const panel = await openAssistant();
+  await screen.findByRole('article', { name: 'Heart attack & stroke risk (WHO)' });
+
+  fireEvent.change(within(panel).getByLabelText('Ask the health assistant a question'), { target: { value: 'Is my heart risk worrying?' } });
+  fireEvent.click(within(panel).getByRole('button', { name: 'Send' }));
+  expect(await within(panel).findByText('Send your question to Claude (Anthropic)?')).toBeInTheDocument();
+  expect(chatCalls()).toHaveLength(0);
+
+  fireEvent.click(within(panel).getByRole('button', { name: 'Send to Claude (Anthropic)' }));
+  expect(await within(panel).findByText('Your heart risk is low. Keep active.')).toBeInTheDocument();
+  expect(within(panel).getByText('Answered by Claude (Anthropic)')).toBeInTheDocument();
+
+  const body = JSON.parse(chatCalls()[0][1].body);
+  expect(body.messages.at(-1)).toEqual({ role: 'user', content: 'Is my heart risk worrying?' });
+  expect(body.scores.find((s) => s.id === 'whoCvd')).toMatchObject({ title: 'Heart attack & stroke risk (WHO)', value: 3.2, category: 'Under 5%' });
+  const sent = JSON.stringify(body);
+  ['Metformin', 'test@example.com', 'Test User', 'dateOfBirth'].forEach((personal) => expect(sent).not.toContain(personal));
+
+  // Consent lasts for the conversation
+  fireEvent.change(within(panel).getByLabelText('Ask the health assistant a question'), { target: { value: 'And my diabetes risk?' } });
+  fireEvent.click(within(panel).getByRole('button', { name: 'Send' }));
+  await waitFor(() => expect(chatCalls()).toHaveLength(2));
+  expect(JSON.parse(chatCalls()[1][1].body).messages.map((m) => m.role)).toEqual(['user', 'assistant', 'user']);
+});
+
+test('emergencies get safety guidance on the device and are never sent', async () => {
+  mockAssistantApi();
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+  const panel = await openAssistant();
+  fireEvent.change(within(panel).getByLabelText('Ask the health assistant a question'), { target: { value: 'I have chest pain right now' } });
+  fireEvent.click(within(panel).getByRole('button', { name: 'Send' }));
+  expect(within(panel).getByRole('alert')).toHaveTextContent(/sign of a heart attack.*call your local emergency number now/i);
+  expect(chatCalls()).toHaveLength(0);
+});
+
+test('without the cloud assistant, typed questions are matched to an on-device answer', async () => {
+  mockAssistantApi({ available: false });
+  __getMockStore()['test-user'] = { answers: dashboardAnswers() };
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+  const panel = await openAssistant();
+  await waitFor(() => expect(global.fetch.mock.calls.some(([url]) => String(url).includes('/assistant/status'))).toBe(true));
+  await screen.findByRole('article', { name: 'Heart attack & stroke risk (WHO)' });
+
+  fireEvent.change(within(panel).getByLabelText('Ask the health assistant a question'), { target: { value: 'How can I improve?' } });
+  fireEvent.click(within(panel).getByRole('button', { name: 'Send' }));
+  expect(await within(panel).findByText(/these would make the biggest difference/)).toBeInTheDocument();
+  expect(within(panel).getByText(/closest topic I can answer on your device/)).toBeInTheDocument();
+  expect(chatCalls()).toHaveLength(0);
+});
+
+test('declining consent sends nothing', async () => {
+  mockAssistantApi();
+  __setMockUser(testUser);
+  renderAt('/dashboard');
+  const panel = await openAssistant();
+  await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+  fireEvent.change(within(panel).getByLabelText('Ask the health assistant a question'), { target: { value: 'Tell me something interesting' } });
+  fireEvent.click(within(panel).getByRole('button', { name: 'Send' }));
+  fireEvent.click(await within(panel).findByRole('button', { name: 'Not now' }));
+  expect(within(panel).getByText(/nothing was sent/)).toBeInTheDocument();
+  expect(chatCalls()).toHaveLength(0);
+});

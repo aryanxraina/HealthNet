@@ -2,7 +2,7 @@ import { sectionById } from '../questionnaire/sections';
 import { toStandard } from '../lib/units';
 import { BLOOD_PRESSURE, LAB_TESTS } from './labDictionary';
 import { fixOcrDigits } from './ocrText';
-import { classifyName } from './tagger/tagger';
+import { classifyName } from './tagger/classify';
 
 // Turns the text lines of a lab report (from a PDF's text layer or on-device OCR) into
 // Vitals answers. Pure functions only, so every lab layout can be unit-tested.

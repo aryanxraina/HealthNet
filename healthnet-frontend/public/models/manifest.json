@@ -1,0 +1,6 @@
+{
+  "algorithm": "Ed25519",
+  "keyId": "46da4a6b613e109f",
+  "payload": "{\n  \"format\": 1,\n  \"published\": \"2026-10-26T22:33:05Z\",\n  \"models\": [\n    {\n      \"id\": \"healthnet-tagger\",\n      \"version\": \"1.0.0\",\n      \"minAppVersion\": \"0.1.0\",\n      \"rollout\": 1.0,\n      \"disabled\": false,\n      \"notes\": \"Recognises lab test names the rule-based reader doesn't know.\",\n      \"files\": [\n        {\n          \"path\": \"healthnet-tagger/1.0.0/model.json\",\n          \"bytes\": 297838,\n          \"sha256\": \"3f6586f7907450ba488d2b92ce640577b67b6edccbe5b9287a8e45cdfdad22e6\"\n        }\n      ],\n      \"eval\": {\n        \"precision\": 0.997,\n        \"recall\": 0.9643,\n        \"f1\": 0.9804,\n        \"dangerousErrorRate\": 0\n      }\n    }\n  ]\n}",
+  "signature": "sx+IiGiNUCxHWxJ6Sfnw1xON5UD293/W9Uc0V0h95UVc/bf7fknstoxlw5TV5tXONfV9LZHypU6ji/98ForMDA=="
+}

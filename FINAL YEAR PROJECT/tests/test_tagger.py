@@ -34,7 +34,7 @@ def test_every_label_is_represented(generated):
 def test_exported_model_and_fixture_agree():
     model = json.loads(train.MODEL_OUT.read_text(encoding="utf-8"))
     parity = json.loads(train.PARITY_OUT.read_text(encoding="utf-8"))
-    assert set(model) == {"version", "labels", "intercepts", "weights"}
+    assert set(model) == {"version", "labels", "intercepts", "weights"} and model["version"] == train.MODEL_VERSION
     assert all(len(w) == len(model["labels"]) for w in model["weights"].values())
     for case in parity:
         assert feature_counts(case["text"]) == case["features"]

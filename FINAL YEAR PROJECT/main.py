@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from assistant_api import router as assistant_router
 from drugs_api import router as drugs_router
 from extract_api import router as extract_router
 from food_api import router as food_router
@@ -34,6 +35,7 @@ app.include_router(drugs_router)
 app.include_router(extract_router)
 app.include_router(food_router)
 app.include_router(wearables_router)
+app.include_router(assistant_router)
 
 
 @app.get("/")

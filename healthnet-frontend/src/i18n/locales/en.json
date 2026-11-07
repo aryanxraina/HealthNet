@@ -856,5 +856,131 @@
       "oura": "Oura",
       "appleHealth": "Apple Health and Health Connect (need the mobile app)"
     }
+  },
+  "assistant": {
+    "title": "Health assistant",
+    "openButton": "Open the health assistant",
+    "closeButton": "Close the health assistant",
+    "close": "Close",
+    "welcome": "Hi! I can explain your HealthNet results in plain language. Tap a question below. Those answers are worked out on your device from your own scores, so nothing is sent anywhere.",
+    "welcomeSignedOut": "Hi! I'm HealthNet's health assistant. Sign in and answer the questionnaire, and I can explain your own heart, diabetes and wellbeing results.",
+    "suggested": "Suggested questions",
+    "placeholder": "Ask about your results…",
+    "inputLabel": "Ask the health assistant a question",
+    "send": "Send",
+    "signIn": "Sign in",
+    "thinking": "Thinking…",
+    "fromDevice": "Answered on your device",
+    "fromCloud": "Answered by {{provider}}",
+    "points": "points",
+    "scoreLine": "{{title}}: {{value}} ({{category}}).",
+    "disclaimer": "Educational information, not medical advice or a diagnosis. In an emergency, call your local emergency number.",
+    "localOnly": "That's the closest topic I can answer on your device. Typed questions get fuller answers when the cloud assistant is set up.",
+    "typedNeedsCloud": "I can answer the suggested questions on your device. Answers to typed questions need the cloud assistant, which isn't set up on this HealthNet server yet.",
+    "declined": "No problem, nothing was sent. You can still tap any suggested question for an answer worked out on your device.",
+    "signInForMore": "Sign in to ask about your own results.",
+    "questions": {
+      "overview": "Summarise my results",
+      "heart": "Explain my heart risk",
+      "diabetes": "Explain my diabetes risk",
+      "wellbeing": "Explain my mood, sleep and alcohol checks",
+      "improve": "How can I lower my risks?",
+      "missing": "What's still missing?",
+      "doctor": "What should I ask my doctor?",
+      "privacy": "What happens to my data?",
+      "whatIs": "What is HealthNet?"
+    },
+    "answers": {
+      "noScores": "You don't have any scores yet. Answer the health questionnaire and I can explain what your results mean.",
+      "overviewIntro": "Here are your current results:",
+      "overviewOutro": "Tap a topic below to hear what any of these mean, or what you could do about them.",
+      "estimate": "These are estimates from published risk models, based on people like you. They can't say for certain what will happen to you, but they help you and your doctor decide what's worth acting on.",
+      "improveIntro": "Based on your answers, these would make the biggest difference:",
+      "nothingMissing": "Nothing's missing: all your scores have what they need.",
+      "missingIntro": "Some scores need a few more answers. You can add them in the questionnaire:",
+      "doctorIntro": "Questions you could take to your next appointment:",
+      "privacy": "Suggested questions are answered on your device from your own scores, and nothing is sent. If you type a question and the cloud assistant is set up, I'll ask before sending anything. Only your question and a summary of your scores (their names, values and bands) are sent, never your name, email or questionnaire answers. HealthNet doesn't store the conversation.",
+      "whatIs": "HealthNet estimates your health risks with published, validated models: heart attack and stroke (WHO and AHA PREVENT), high blood pressure, type 2 diabetes, and quick checks for mood, sleep and alcohol. It can also read lab reports and prescriptions on your device, track food and sync a fitness tracker.",
+      "unknown": "Sorry, I can't answer that one on your device."
+    },
+    "explain": {
+      "whoCvd": "This is the World Health Organization's estimate of your chance of a heart attack or stroke in the next 10 years, adjusted for your region of the world.",
+      "prevent": "This is the American Heart Association's PREVENT estimate of your 10-year chance of any heart disease, including heart attack, stroke and heart failure.",
+      "framinghamHtn": "This is the Framingham Heart Study's estimate of your chance of developing high blood pressure within 4 years.",
+      "findrisc": "FINDRISC is a questionnaire score for your chance of developing type 2 diabetes in the next 10 years. Scores from 12 up are worth a blood test.",
+      "mlDiabetes": "This is HealthNet's experimental model. It was trained on a single group of women, so treat it as a rough guide only.",
+      "bodyComposition": "BMI compares your weight with your height; waist-to-height ratio shows how much weight you carry around your middle, which matters most for heart and diabetes risk.",
+      "phq4": "PHQ-4 is a short check for anxiety and low mood over the last two weeks. It isn't a diagnosis, but higher scores are worth talking about with someone.",
+      "stopBang": "STOP-Bang screens for obstructive sleep apnoea, where breathing stops briefly during sleep. Higher scores are worth mentioning to a doctor.",
+      "auditC": "AUDIT-C checks whether your drinking is above the low-risk limit."
+    },
+    "doctorQuestions": {
+      "heartCheck": "My heart risk estimate is 10% or more. Should we look at my blood pressure or cholesterol?",
+      "bloodPressureCheck": "My blood pressure reading was high. Should I check it again or monitor it at home?",
+      "diabetesTest": "My diabetes risk is raised. Should I have an HbA1c or fasting glucose test?",
+      "bloodTest": "Could I have a cholesterol and kidney function blood test?",
+      "sleepCheck": "My sleep apnoea screen was positive. Would a sleep test help?",
+      "talkToSomeone": "I've been feeling anxious or low. What support is available?",
+      "quitSmoking": "What help is there to stop smoking?",
+      "drinkLess": "Could you help me cut down on alcohol?",
+      "healthyWeight": "What would be a healthy weight and waist size for me?",
+      "general": "Which of my results matters most, and what should I do first?",
+      "followUp": "When should I come back for a check?"
+    },
+    "consent": {
+      "title": "Send your question to {{provider}}?",
+      "sent": "Sent: your question, this conversation, and a summary of your scores (names, values and bands).",
+      "notSent": "Never sent: your name, email or questionnaire answers. HealthNet doesn't store the conversation.",
+      "provider": "{{provider}} processes it under HealthNet's API plan, which doesn't allow your messages to be used for training.",
+      "send": "Send to {{provider}}",
+      "notNow": "Not now"
+    },
+    "safety": {
+      "heart": "Chest pain can be a sign of a heart attack.",
+      "stroke": "These can be signs of a stroke. Every minute counts.",
+      "breathing": "Severe difficulty breathing needs urgent help.",
+      "unconscious": "This needs urgent medical help.",
+      "selfHarm": "I'm really sorry you're feeling this way. You don't have to face this alone.",
+      "callNow": "Please call your local emergency number now, or ask someone near you to call for you."
+    },
+    "errors": {
+      "notConfigured": "The cloud assistant isn't set up on this HealthNet server yet. You can still tap the suggested questions.",
+      "rateLimited": "You've asked a lot of questions in the last hour. Please try again later.",
+      "refused": "The assistant couldn't answer that. Try asking in a different way.",
+      "unavailable": "Couldn't reach the assistant. Check your connection and try again.",
+      "failed": "Something went wrong getting an answer. Please try again.",
+      "invalid": "That message couldn't be sent. Try a shorter question.",
+      "auth": "Please sign in again.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  },
+  "models": {
+    "title": "On-device models",
+    "subtitle": "The AI models that run on this device, so your documents never have to leave it.",
+    "names": {
+      "healthnet-tagger": "HealthNet Tagger"
+    },
+    "descriptions": {
+      "healthnet-tagger": "Recognises lab test names the standard reader doesn't know, when you import a report."
+    },
+    "usingBuiltIn": "Using the built-in version {{version}}",
+    "usingDownload": "Using downloaded version {{version}} (installed {{date}}, {{size}} KB)",
+    "updateAvailable": "Version {{version}} is available ({{size}} KB).",
+    "install": "Install {{version}}",
+    "remove": "Use the built-in version",
+    "check": "Check for updates",
+    "checked": "Checked for updates just now.",
+    "withdrawn": "A downloaded model was withdrawn by HealthNet, so this device is back on the built-in version.",
+    "installed": "Installed version {{version}}. It was checked against HealthNet's signature and tested before use.",
+    "removed": "Removed the download. This device now uses the built-in version.",
+    "privacy": "Checking for updates downloads HealthNet's public list of models; nothing about you is sent. Every download is checked against HealthNet's signature and tested before it's used.",
+    "errors": {
+      "network": "Couldn't reach the model server. Check your connection and try again.",
+      "signature": "The model list didn't carry a valid HealthNet signature, so nothing was installed.",
+      "unsupported": "This browser can't check model signatures, so it keeps the built-in models. Updating the browser fixes this.",
+      "integrity": "The download didn't match HealthNet's signed list, so it wasn't installed.",
+      "selfTest": "The new version failed its safety check, so this device keeps its current version.",
+      "notOffered": "That update isn't available for this device yet."
+    }
   }
 }
